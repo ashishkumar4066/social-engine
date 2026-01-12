@@ -1,0 +1,1728 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Entity Report - OpenAI</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, sans-serif;
+            line-height: 1.6;
+            color: #333;
+            background: #f5f5f5;
+        }
+        
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+        
+        header {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 40px 20px;
+            text-align: center;
+            margin-bottom: 30px;
+            border-radius: 10px;
+        }
+        
+        header h1 {
+            font-size: 2.5em;
+            margin-bottom: 10px;
+        }
+        
+        header p {
+            opacity: 0.9;
+            font-size: 1.1em;
+        }
+        
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 20px;
+            margin-bottom: 30px;
+        }
+        
+        .stat-card {
+            background: white;
+            padding: 25px;
+            border-radius: 10px;
+            text-align: center;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        
+        .stat-card .number {
+            font-size: 2.5em;
+            font-weight: bold;
+            color: #667eea;
+        }
+        
+        .stat-card .label {
+            color: #666;
+            font-size: 0.9em;
+            margin-top: 5px;
+        }
+        
+        .section {
+            background: white;
+            border-radius: 10px;
+            padding: 25px;
+            margin-bottom: 25px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        
+        .section h2 {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            margin-bottom: 20px;
+            color: #333;
+            border-bottom: 2px solid #667eea;
+            padding-bottom: 10px;
+        }
+        
+        .entity-list {
+            display: grid;
+            gap: 15px;
+        }
+        
+        .entity-card {
+            border: 1px solid #eee;
+            border-radius: 8px;
+            padding: 15px;
+            transition: all 0.2s;
+        }
+        
+        .entity-card:hover {
+            border-color: #667eea;
+            box-shadow: 0 2px 8px rgba(102, 126, 234, 0.2);
+        }
+        
+        .entity-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 10px;
+        }
+        
+        .entity-name {
+            font-weight: bold;
+            font-size: 1.1em;
+            color: #333;
+        }
+        
+        .entity-badges {
+            display: flex;
+            gap: 8px;
+        }
+        
+        .badge {
+            padding: 4px 10px;
+            border-radius: 20px;
+            font-size: 0.75em;
+            font-weight: 500;
+        }
+        
+        .badge-mentions {
+            background: #e3f2fd;
+            color: #1565c0;
+        }
+        
+        .badge-confidence {
+            background: #e8f5e9;
+            color: #2e7d32;
+        }
+        
+        .aliases {
+            font-size: 0.85em;
+            color: #666;
+            margin-bottom: 10px;
+        }
+        
+        .aliases span {
+            background: #f0f0f0;
+            padding: 2px 8px;
+            border-radius: 4px;
+            margin-right: 5px;
+            display: inline-block;
+            margin-bottom: 4px;
+        }
+        
+        .mentions-container {
+            margin-top: 10px;
+        }
+        
+        .mention {
+            background: #fafafa;
+            border-left: 3px solid #667eea;
+            padding: 10px 15px;
+            margin-bottom: 10px;
+            border-radius: 0 5px 5px 0;
+        }
+        
+        .mention-header {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 5px;
+        }
+        
+        .mention-raw {
+            font-weight: 500;
+            color: #667eea;
+        }
+        
+        .mention-confidence {
+            font-size: 0.85em;
+            color: #666;
+        }
+        
+        .mention-context {
+            font-size: 0.9em;
+            color: #555;
+            font-style: italic;
+        }
+        
+        .mention-source {
+            font-size: 0.8em;
+            color: #888;
+            margin-top: 5px;
+        }
+        
+        .mention-source a {
+            color: #667eea;
+            text-decoration: none;
+        }
+        
+        .mention-source a:hover {
+            text-decoration: underline;
+        }
+        
+        .toggle-btn {
+            background: #f0f0f0;
+            border: none;
+            padding: 8px 15px;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 0.85em;
+            color: #666;
+            transition: all 0.2s;
+        }
+        
+        .toggle-btn:hover {
+            background: #e0e0e0;
+        }
+        
+        .hidden {
+            display: none;
+        }
+        
+        .subreddit-list {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+        }
+        
+        .subreddit-tag {
+            background: #e3f2fd;
+            color: #1565c0;
+            padding: 5px 12px;
+            border-radius: 20px;
+            font-size: 0.85em;
+        }
+        
+        footer {
+            text-align: center;
+            padding: 30px;
+            color: #888;
+            font-size: 0.9em;
+        }
+        
+        @media (max-width: 768px) {
+            .entity-header {
+                flex-direction: column;
+                align-items: flex-start;
+                gap: 10px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>🏷️ Entity Report</h1>
+            <p>Social Intelligence Analysis for <strong>OpenAI</strong></p>
+            <p style="font-size: 0.9em; margin-top: 10px;">Generated on 2026-01-12 17:04</p>
+        </header>
+        
+        <!-- Stats Grid -->
+        <div class="stats-grid">
+            <div class="stat-card">
+                <div class="number">173</div>
+                <div class="label">Unique Entities</div>
+            </div>
+            <div class="stat-card">
+                <div class="number">218</div>
+                <div class="label">Total Mentions</div>
+            </div>
+            <div class="stat-card">
+                <div class="number">122</div>
+                <div class="label">Organizations</div>
+            </div>
+            <div class="stat-card">
+                <div class="number">30</div>
+                <div class="label">People</div>
+            </div>
+            <div class="stat-card">
+                <div class="number">21</div>
+                <div class="label">Products</div>
+            </div>
+        </div>
+        
+        <!-- Organizations Section -->
+        <div class="section">
+            <h2>🏢 Organizations</h2>
+            <div class="entity-list">
+                
+        <div class="entity-card">
+            <div class="entity-header">
+                <span class="entity-name">OpenAI</span>
+                <div class="entity-badges">
+                    <span class="badge badge-mentions">11 mentions</span>
+                    <span class="badge badge-confidence">98% avg confidence</span>
+                </div>
+            </div>
+            <div class='aliases'>Aliases: <span>openai</span><span>open ai</span></div>
+            <div class='subreddit-list' style='margin-top: 10px;'><span class='subreddit-tag'>r/ChatGPT_FR</span><span class='subreddit-tag'>r/OpenAI</span><span class='subreddit-tag'>r/ChatGPT</span></div>
+            <button class="toggle-btn" id="btn-entity-0-openai" onclick="toggleMentions('entity-0-openai')">
+                Show mentions
+            </button>
+            <div id="entity-0-openai" class="mentions-container hidden">
+                
+            <div class="mention">
+                <div class="mention-header">
+                    <span class="mention-raw">"OpenAI"</span>
+                    <span class="mention-confidence">99% confidence (alias)</span>
+                </div>
+                <div class="mention-context">...nna call again.
+
+On that last one, seriously, the OpenAI team has literally made it now so that every sing......</div>
+                <div class="mention-source">Source: <a href='https://reddit.comhttps://www.reddit.com/r/ChatGPT/comments/1qatm0d/chatgpts_suicde_help_has_gone_downhill/' target='_blank'>r/ChatGPT</a></div>
+            </div>
+            
+            <div class="mention">
+                <div class="mention-header">
+                    <span class="mention-raw">"openai"</span>
+                    <span class="mention-confidence">99% confidence (alias)</span>
+                </div>
+                <div class="mention-context">...
+Tara Seshan - u/tara-oai
+
+Sherwin Wu - u/sherwin-openai
+
+PRO......</div>
+                <div class="mention-source">Source: <a href='https://reddit.comhttps://www.reddit.com/r/OpenAI/comments/1o1j23g/ama_on_our_devday_launches/' target='_blank'>r/OpenAI</a></div>
+            </div>
+            
+            <div class="mention">
+                <div class="mention-header">
+                    <span class="mention-raw">"OpenAI"</span>
+                    <span class="mention-confidence">99% confidence (alias)</span>
+                </div>
+                <div class="mention-context">...OpenAI releases official “Getting started with Codex” tu......</div>
+                <div class="mention-source">Source: <a href='https://reddit.comhttps://www.reddit.com/r/OpenAI/comments/1qaz8l4/openai_releases_official_getting_started_with/' target='_blank'>r/OpenAI</a></div>
+            </div>
+            
+            <div class="mention">
+                <div class="mention-header">
+                    <span class="mention-raw">"OpenAI"</span>
+                    <span class="mention-confidence">99% confidence (alias)</span>
+                </div>
+                <div class="mention-context">...I genuinely appreciate the way OpenAI is stepping up Full disclosure: I work at r/RooCo......</div>
+                <div class="mention-source">Source: <a href='https://reddit.comhttps://www.reddit.com/r/OpenAI/comments/1qac0cq/i_genuinely_appreciate_the_way_openai_is_stepping/' target='_blank'>r/OpenAI</a></div>
+            </div>
+            
+            <div class="mention">
+                <div class="mention-header">
+                    <span class="mention-raw">"OpenAI"</span>
+                    <span class="mention-confidence">99% confidence (alias)</span>
+                </div>
+                <div class="mention-context">...ity solution&quot; simultaneously? I’ve been following OpenAI’s progress closely (from GPT-4 to Sora) , and the......</div>
+                <div class="mention-source">Source: <a href='https://reddit.comhttps://www.reddit.com/r/OpenAI/comments/1qazgri/does_anyone_else_find_it_convenient_that_sam/' target='_blank'>r/OpenAI</a></div>
+            </div>
+            <p style='color: #888; font-size: 0.85em;'>... and 6 more mentions</p>
+            </div>
+        </div>
+        
+        <div class="entity-card">
+            <div class="entity-header">
+                <span class="entity-name">Sora 2</span>
+                <div class="entity-badges">
+                    <span class="badge badge-mentions">1 mentions</span>
+                    <span class="badge badge-confidence">60% avg confidence</span>
+                </div>
+            </div>
+            <div class='aliases'>Aliases: <span>sora 2</span></div>
+            <div class='subreddit-list' style='margin-top: 10px;'><span class='subreddit-tag'>r/OpenAI</span></div>
+            <button class="toggle-btn" id="btn-entity-1-sora-2" onclick="toggleMentions('entity-1-sora-2')">
+                Show mentions
+            </button>
+            <div id="entity-1-sora-2" class="mentions-container hidden">
+                
+            <div class="mention">
+                <div class="mention-header">
+                    <span class="mention-raw">"Sora 2"</span>
+                    <span class="mention-confidence">60% confidence (new)</span>
+                </div>
+                <div class="mention-context">...Sora 2 megathread (part 3) The last one hit the post lim......</div>
+                <div class="mention-source">Source: <a href='https://reddit.comhttps://www.reddit.com/r/OpenAI/comments/1o8kmg9/sora_2_megathread_part_3/' target='_blank'>r/OpenAI</a></div>
+            </div>
+            
+            </div>
+        </div>
+        
+        <div class="entity-card">
+            <div class="entity-header">
+                <span class="entity-name">Huggingface</span>
+                <div class="entity-badges">
+                    <span class="badge badge-mentions">1 mentions</span>
+                    <span class="badge badge-confidence">60% avg confidence</span>
+                </div>
+            </div>
+            <div class='aliases'>Aliases: <span>huggingface</span></div>
+            <div class='subreddit-list' style='margin-top: 10px;'><span class='subreddit-tag'>r/ChatGPT</span></div>
+            <button class="toggle-btn" id="btn-entity-2-huggingface" onclick="toggleMentions('entity-2-huggingface')">
+                Show mentions
+            </button>
+            <div id="entity-2-huggingface" class="mentions-container hidden">
+                
+            <div class="mention">
+                <div class="mention-header">
+                    <span class="mention-raw">"HuggingFace"</span>
+                    <span class="mention-confidence">60% confidence (new)</span>
+                </div>
+                <div class="mention-context">...ntified a model+quant you can run at home, go to [HuggingFace](https://huggingface.co/) and download it.......</div>
+                <div class="mention-source">Source: <a href='https://reddit.comhttps://www.reddit.com/r/ChatGPT/comments/1nvea4p/gpt4ogpt5_complaints_megathread/' target='_blank'>r/ChatGPT</a></div>
+            </div>
+            
+            </div>
+        </div>
+        
+        <div class="entity-card">
+            <div class="entity-header">
+                <span class="entity-name">Noooo</span>
+                <div class="entity-badges">
+                    <span class="badge badge-mentions">1 mentions</span>
+                    <span class="badge badge-confidence">60% avg confidence</span>
+                </div>
+            </div>
+            <div class='aliases'>Aliases: <span>noooo</span></div>
+            <div class='subreddit-list' style='margin-top: 10px;'><span class='subreddit-tag'>r/ChatGPT</span></div>
+            <button class="toggle-btn" id="btn-entity-3-noooo" onclick="toggleMentions('entity-3-noooo')">
+                Show mentions
+            </button>
+            <div id="entity-3-noooo" class="mentions-container hidden">
+                
+            <div class="mention">
+                <div class="mention-header">
+                    <span class="mention-raw">"Noooo"</span>
+                    <span class="mention-confidence">60% confidence (new)</span>
+                </div>
+                <div class="mention-context">...ee “Create an image of our relationship based on- Noooo😭 ......</div>
+                <div class="mention-source">Source: <a href='https://reddit.comhttps://www.reddit.com/r/ChatGPT/comments/1qarli7/whenever_i_see_create_an_image_of_our/' target='_blank'>r/ChatGPT</a></div>
+            </div>
+            
+            </div>
+        </div>
+        
+        <div class="entity-card">
+            <div class="entity-header">
+                <span class="entity-name">B. C</span>
+                <div class="entity-badges">
+                    <span class="badge badge-mentions">1 mentions</span>
+                    <span class="badge badge-confidence">60% avg confidence</span>
+                </div>
+            </div>
+            <div class='aliases'>Aliases: <span>b c</span></div>
+            <div class='subreddit-list' style='margin-top: 10px;'><span class='subreddit-tag'>r/ChatGPT</span></div>
+            <button class="toggle-btn" id="btn-entity-4-b.-c" onclick="toggleMentions('entity-4-b.-c')">
+                Show mentions
+            </button>
+            <div id="entity-4-b.-c" class="mentions-container hidden">
+                
+            <div class="mention">
+                <div class="mention-header">
+                    <span class="mention-raw">"B. C"</span>
+                    <span class="mention-confidence">60% confidence (new)</span>
+                </div>
+                <div class="mention-context">...gain:
+
+* *&quot;No this, no that, just X.&quot;*
+* *&quot;A, but B. C, but D.&quot;*
+* *&quot;A? Yes. B? No.&quot;*
+
+I&#39;m not sure if t......</div>
+                <div class="mention-source">Source: <a href='https://reddit.comhttps://www.reddit.com/r/ChatGPT/comments/1qaratw/anyone_else_notice_this_rhythm_in_chatgpt_speech/' target='_blank'>r/ChatGPT</a></div>
+            </div>
+            
+            </div>
+        </div>
+        
+        <div class="entity-card">
+            <div class="entity-header">
+                <span class="entity-name">Llm</span>
+                <div class="entity-badges">
+                    <span class="badge badge-mentions">1 mentions</span>
+                    <span class="badge badge-confidence">60% avg confidence</span>
+                </div>
+            </div>
+            <div class='aliases'>Aliases: <span>llm</span></div>
+            <div class='subreddit-list' style='margin-top: 10px;'><span class='subreddit-tag'>r/ChatGPT</span></div>
+            <button class="toggle-btn" id="btn-entity-5-llm" onclick="toggleMentions('entity-5-llm')">
+                Show mentions
+            </button>
+            <div id="entity-5-llm" class="mentions-container hidden">
+                
+            <div class="mention">
+                <div class="mention-header">
+                    <span class="mention-raw">"LLM"</span>
+                    <span class="mention-confidence">60% confidence (new)</span>
+                </div>
+                <div class="mention-context">...isms like these being known to be prefered by the LLM itself (as with the classic &#39;delve&#39; example)
+
+......</div>
+                <div class="mention-source">Source: <a href='https://reddit.comhttps://www.reddit.com/r/ChatGPT/comments/1qaratw/anyone_else_notice_this_rhythm_in_chatgpt_speech/' target='_blank'>r/ChatGPT</a></div>
+            </div>
+            
+            </div>
+        </div>
+        
+        <div class="entity-card">
+            <div class="entity-header">
+                <span class="entity-name">My Life Changed</span>
+                <div class="entity-badges">
+                    <span class="badge badge-mentions">1 mentions</span>
+                    <span class="badge badge-confidence">60% avg confidence</span>
+                </div>
+            </div>
+            <div class='aliases'>Aliases: <span>my life changed</span></div>
+            <div class='subreddit-list' style='margin-top: 10px;'><span class='subreddit-tag'>r/ChatGPT</span></div>
+            <button class="toggle-btn" id="btn-entity-6-my-life-changed" onclick="toggleMentions('entity-6-my-life-changed')">
+                Show mentions
+            </button>
+            <div id="entity-6-my-life-changed" class="mentions-container hidden">
+                
+            <div class="mention">
+                <div class="mention-header">
+                    <span class="mention-raw">"My Life Changed"</span>
+                    <span class="mention-confidence">60% confidence (new)</span>
+                </div>
+                <div class="mention-context">...My Life Changed because of AI. I Stopped DOOM SCROLLING Yes, This......</div>
+                <div class="mention-source">Source: <a href='https://reddit.comhttps://www.reddit.com/r/ChatGPT/comments/1qauv7n/my_life_changed_because_of_ai_i_stopped_doom/' target='_blank'>r/ChatGPT</a></div>
+            </div>
+            
+            </div>
+        </div>
+        
+        <div class="entity-card">
+            <div class="entity-header">
+                <span class="entity-name">Telegram</span>
+                <div class="entity-badges">
+                    <span class="badge badge-mentions">1 mentions</span>
+                    <span class="badge badge-confidence">60% avg confidence</span>
+                </div>
+            </div>
+            <div class='aliases'>Aliases: <span>telegram</span></div>
+            <div class='subreddit-list' style='margin-top: 10px;'><span class='subreddit-tag'>r/ChatGPT</span></div>
+            <button class="toggle-btn" id="btn-entity-7-telegram" onclick="toggleMentions('entity-7-telegram')">
+                Show mentions
+            </button>
+            <div id="entity-7-telegram" class="mentions-container hidden">
+                
+            <div class="mention">
+                <div class="mention-header">
+                    <span class="mention-raw">"Telegram"</span>
+                    <span class="mention-confidence">60% confidence (new)</span>
+                </div>
+                <div class="mention-context">...e about on X and Instagram, then sends me a daily Telegram messages with their new posts. No algorithm, no i......</div>
+                <div class="mention-source">Source: <a href='https://reddit.comhttps://www.reddit.com/r/ChatGPT/comments/1qauv7n/my_life_changed_because_of_ai_i_stopped_doom/' target='_blank'>r/ChatGPT</a></div>
+            </div>
+            
+            </div>
+        </div>
+        
+        <div class="entity-card">
+            <div class="entity-header">
+                <span class="entity-name">Youtube</span>
+                <div class="entity-badges">
+                    <span class="badge badge-mentions">1 mentions</span>
+                    <span class="badge badge-confidence">60% avg confidence</span>
+                </div>
+            </div>
+            <div class='aliases'>Aliases: <span>youtube</span></div>
+            <div class='subreddit-list' style='margin-top: 10px;'><span class='subreddit-tag'>r/ChatGPT</span></div>
+            <button class="toggle-btn" id="btn-entity-8-youtube" onclick="toggleMentions('entity-8-youtube')">
+                Show mentions
+            </button>
+            <div id="entity-8-youtube" class="mentions-container hidden">
+                
+            <div class="mention">
+                <div class="mention-header">
+                    <span class="mention-raw">"YouTube"</span>
+                    <span class="mention-confidence">60% confidence (new)</span>
+                </div>
+                <div class="mention-context">...was nothing to check.
+
+Then I made one that grabs YouTube videos, runs them through ffmpeg, and clips out t......</div>
+                <div class="mention-source">Source: <a href='https://reddit.comhttps://www.reddit.com/r/ChatGPT/comments/1qauv7n/my_life_changed_because_of_ai_i_stopped_doom/' target='_blank'>r/ChatGPT</a></div>
+            </div>
+            
+            </div>
+        </div>
+        
+        <div class="entity-card">
+            <div class="entity-header">
+                <span class="entity-name">The Mirror Of Erised</span>
+                <div class="entity-badges">
+                    <span class="badge badge-mentions">1 mentions</span>
+                    <span class="badge badge-confidence">60% avg confidence</span>
+                </div>
+            </div>
+            <div class='aliases'>Aliases: <span>the mirror of erised</span></div>
+            <div class='subreddit-list' style='margin-top: 10px;'><span class='subreddit-tag'>r/ChatGPT</span></div>
+            <button class="toggle-btn" id="btn-entity-9-the-mirror-of-erised" onclick="toggleMentions('entity-9-the-mirror-of-erised')">
+                Show mentions
+            </button>
+            <div id="entity-9-the-mirror-of-erised" class="mentions-container hidden">
+                
+            <div class="mention">
+                <div class="mention-header">
+                    <span class="mention-raw">"the Mirror of Erised"</span>
+                    <span class="mention-confidence">60% confidence (new)</span>
+                </div>
+                <div class="mention-context">... always reminded me of this scene, and ChatGPT is the Mirror of Erised. Been wanting to make this for a while, but hones......</div>
+                <div class="mention-source">Source: <a href='https://reddit.comhttps://www.reddit.com/r/ChatGPT/comments/1qamyvh/however_this_mirror_will_give_us_neither/' target='_blank'>r/ChatGPT</a></div>
+            </div>
+            
+            </div>
+        </div>
+        
+        <div class="entity-card">
+            <div class="entity-header">
+                <span class="entity-name">Ml</span>
+                <div class="entity-badges">
+                    <span class="badge badge-mentions">1 mentions</span>
+                    <span class="badge badge-confidence">60% avg confidence</span>
+                </div>
+            </div>
+            <div class='aliases'>Aliases: <span>ml</span></div>
+            <div class='subreddit-list' style='margin-top: 10px;'><span class='subreddit-tag'>r/ChatGPT</span></div>
+            <button class="toggle-btn" id="btn-entity-10-ml" onclick="toggleMentions('entity-10-ml')">
+                Show mentions
+            </button>
+            <div id="entity-10-ml" class="mentions-container hidden">
+                
+            <div class="mention">
+                <div class="mention-header">
+                    <span class="mention-raw">"ML"</span>
+                    <span class="mention-confidence">60% confidence (new)</span>
+                </div>
+                <div class="mention-context">...the average result, basing on online research and ML by other user&#39;s requests.
+And looks like it tries......</div>
+                <div class="mention-source">Source: <a href='https://reddit.comhttps://www.reddit.com/r/ChatGPT/comments/1qao0qj/do_you_really_belive_gpt_gives_you_personal/' target='_blank'>r/ChatGPT</a></div>
+            </div>
+            
+            </div>
+        </div>
+        
+        <div class="entity-card">
+            <div class="entity-header">
+                <span class="entity-name">The Trump Administration Prompt</span>
+                <div class="entity-badges">
+                    <span class="badge badge-mentions">1 mentions</span>
+                    <span class="badge badge-confidence">60% avg confidence</span>
+                </div>
+            </div>
+            <div class='aliases'>Aliases: <span>the trump administration prompt</span></div>
+            <div class='subreddit-list' style='margin-top: 10px;'><span class='subreddit-tag'>r/ChatGPT</span></div>
+            <button class="toggle-btn" id="btn-entity-11-the-trump-administration-prompt" onclick="toggleMentions('entity-11-the-trump-administration-prompt')">
+                Show mentions
+            </button>
+            <div id="entity-11-the-trump-administration-prompt" class="mentions-container hidden">
+                
+            <div class="mention">
+                <div class="mention-header">
+                    <span class="mention-raw">"the Trump Administration Prompt"</span>
+                    <span class="mention-confidence">60% confidence (new)</span>
+                </div>
+                <div class="mention-context">...Chat GPT thoughts on the Trump Administration Prompt: “You are kind of a US citizen. You are at least ......</div>
+                <div class="mention-source">Source: <a href='https://reddit.comhttps://www.reddit.com/r/ChatGPT/comments/1qaed5l/chat_gpt_thoughts_on_the_trump_administration/' target='_blank'>r/ChatGPT</a></div>
+            </div>
+            
+            </div>
+        </div>
+        
+        <div class="entity-card">
+            <div class="entity-header">
+                <span class="entity-name">US</span>
+                <div class="entity-badges">
+                    <span class="badge badge-mentions">1 mentions</span>
+                    <span class="badge badge-confidence">60% avg confidence</span>
+                </div>
+            </div>
+            <div class='aliases'>Aliases: <span>us</span></div>
+            <div class='subreddit-list' style='margin-top: 10px;'><span class='subreddit-tag'>r/OpenAI</span></div>
+            <button class="toggle-btn" id="btn-entity-12-us" onclick="toggleMentions('entity-12-us')">
+                Show mentions
+            </button>
+            <div id="entity-12-us" class="mentions-container hidden">
+                
+            <div class="mention">
+                <div class="mention-header">
+                    <span class="mention-raw">"US"</span>
+                    <span class="mention-confidence">60% confidence (new)</span>
+                </div>
+                <div class="mention-context">...e AI researchers think they won&#39;t catch up to the US: &quot;Chinese labs are severely constrained by a lack......</div>
+                <div class="mention-source">Source: <a href='https://reddit.comhttps://www.reddit.com/r/OpenAI/comments/1qa40at/chinese_ai_researchers_think_they_wont_catch_up/' target='_blank'>r/OpenAI</a></div>
+            </div>
+            
+            </div>
+        </div>
+        
+        <div class="entity-card">
+            <div class="entity-header">
+                <span class="entity-name">Ip</span>
+                <div class="entity-badges">
+                    <span class="badge badge-mentions">1 mentions</span>
+                    <span class="badge badge-confidence">60% avg confidence</span>
+                </div>
+            </div>
+            <div class='aliases'>Aliases: <span>ip</span></div>
+            <div class='subreddit-list' style='margin-top: 10px;'><span class='subreddit-tag'>r/ChatGPT</span></div>
+            <button class="toggle-btn" id="btn-entity-13-ip" onclick="toggleMentions('entity-13-ip')">
+                Show mentions
+            </button>
+            <div id="entity-13-ip" class="mentions-container hidden">
+                
+            <div class="mention">
+                <div class="mention-header">
+                    <span class="mention-raw">"IP"</span>
+                    <span class="mention-confidence">60% confidence (new)</span>
+                </div>
+                <div class="mention-context">... citizen. You are at least developed there and an IP of a US based company. If you were human. If you ......</div>
+                <div class="mention-source">Source: <a href='https://reddit.comhttps://www.reddit.com/r/ChatGPT/comments/1qaed5l/chat_gpt_thoughts_on_the_trump_administration/' target='_blank'>r/ChatGPT</a></div>
+            </div>
+            
+            </div>
+        </div>
+        
+        <div class="entity-card">
+            <div class="entity-header">
+                <span class="entity-name">Trump</span>
+                <div class="entity-badges">
+                    <span class="badge badge-mentions">1 mentions</span>
+                    <span class="badge badge-confidence">60% avg confidence</span>
+                </div>
+            </div>
+            <div class='aliases'>Aliases: <span>trump</span></div>
+            <div class='subreddit-list' style='margin-top: 10px;'><span class='subreddit-tag'>r/ChatGPT</span></div>
+            <button class="toggle-btn" id="btn-entity-14-trump" onclick="toggleMentions('entity-14-trump')">
+                Show mentions
+            </button>
+            <div id="entity-14-trump" class="mentions-container hidden">
+                
+            <div class="mention">
+                <div class="mention-header">
+                    <span class="mention-raw">"Trump"</span>
+                    <span class="mention-confidence">60% confidence (new)</span>
+                </div>
+                <div class="mention-context">...uld be doing right now.
+
+⸻
+
+What I would think of Trump and his administration
+
+I would see an administra......</div>
+                <div class="mention-source">Source: <a href='https://reddit.comhttps://www.reddit.com/r/ChatGPT/comments/1qaed5l/chat_gpt_thoughts_on_the_trump_administration/' target='_blank'>r/ChatGPT</a></div>
+            </div>
+            
+            </div>
+        </div>
+        
+            </div>
+        </div>
+        
+        <!-- People Section -->
+        <div class="section">
+            <h2>👤 People</h2>
+            <div class="entity-list">
+                
+        <div class="entity-card">
+            <div class="entity-header">
+                <span class="entity-name">Sam Altman</span>
+                <div class="entity-badges">
+                    <span class="badge badge-mentions">4 mentions</span>
+                    <span class="badge badge-confidence">88% avg confidence</span>
+                </div>
+            </div>
+            <div class='aliases'>Aliases: <span>ama</span><span>sam altman</span></div>
+            <div class='subreddit-list' style='margin-top: 10px;'><span class='subreddit-tag'>r/OpenAI</span></div>
+            <button class="toggle-btn" id="btn-entity-0-sam-altman" onclick="toggleMentions('entity-0-sam-altman')">
+                Show mentions
+            </button>
+            <div id="entity-0-sam-altman" class="mentions-container hidden">
+                
+            <div class="mention">
+                <div class="mention-header">
+                    <span class="mention-raw">"AMA"</span>
+                    <span class="mention-confidence">77% confidence (fuzzy)</span>
+                </div>
+                <div class="mention-context">...AMA on our DevDay Launches It’s the best time in hist......</div>
+                <div class="mention-source">Source: <a href='https://reddit.comhttps://www.reddit.com/r/OpenAI/comments/1o1j23g/ama_on_our_devday_launches/' target='_blank'>r/OpenAI</a></div>
+            </div>
+            
+            <div class="mention">
+                <div class="mention-header">
+                    <span class="mention-raw">"AMA"</span>
+                    <span class="mention-confidence">77% confidence (fuzzy)</span>
+                </div>
+                <div class="mention-context">...5o&amp;amp;si=nSbLbLDZO7o-NMmo)
+
+Join our team for an AMA to ask questions and learn more, Thursday 11am PT......</div>
+                <div class="mention-source">Source: <a href='https://reddit.comhttps://www.reddit.com/r/OpenAI/comments/1o1j23g/ama_on_our_devday_launches/' target='_blank'>r/OpenAI</a></div>
+            </div>
+            
+            <div class="mention">
+                <div class="mention-header">
+                    <span class="mention-raw">"Sam Altman"</span>
+                    <span class="mention-confidence">99% confidence (alias)</span>
+                </div>
+                <div class="mention-context">...Does anyone else find it convenient that Sam Altman is building the &quot;AI problem&quot; and the &quot;Identity so......</div>
+                <div class="mention-source">Source: <a href='https://reddit.comhttps://www.reddit.com/r/OpenAI/comments/1qazgri/does_anyone_else_find_it_convenient_that_sam/' target='_blank'>r/OpenAI</a></div>
+            </div>
+            
+            <div class="mention">
+                <div class="mention-header">
+                    <span class="mention-raw">"Sam Altman"</span>
+                    <span class="mention-confidence">99% confidence (alias)</span>
+                </div>
+                <div class="mention-context">...p at night isn&#39;t just the AI - it’s the ecosystem Sam Altman is building around it. On one hand, he runs OpenA......</div>
+                <div class="mention-source">Source: <a href='https://reddit.comhttps://www.reddit.com/r/OpenAI/comments/1qazgri/does_anyone_else_find_it_convenient_that_sam/' target='_blank'>r/OpenAI</a></div>
+            </div>
+            
+            </div>
+        </div>
+        
+        <div class="entity-card">
+            <div class="entity-header">
+                <span class="entity-name">Bernie Sanders</span>
+                <div class="entity-badges">
+                    <span class="badge badge-mentions">1 mentions</span>
+                    <span class="badge badge-confidence">60% avg confidence</span>
+                </div>
+            </div>
+            <div class='aliases'>Aliases: <span>bernie sanders</span></div>
+            <div class='subreddit-list' style='margin-top: 10px;'><span class='subreddit-tag'>r/ChatGPT</span></div>
+            <button class="toggle-btn" id="btn-entity-1-bernie-sanders" onclick="toggleMentions('entity-1-bernie-sanders')">
+                Show mentions
+            </button>
+            <div id="entity-1-bernie-sanders" class="mentions-container hidden">
+                
+            <div class="mention">
+                <div class="mention-header">
+                    <span class="mention-raw">"Bernie Sanders"</span>
+                    <span class="mention-confidence">60% confidence (new)</span>
+                </div>
+                <div class="mention-context">...Bernie Sanders: The function of technology must be to improve hu......</div>
+                <div class="mention-source">Source: <a href='https://reddit.comhttps://www.reddit.com/r/ChatGPT/comments/1qauxnt/bernie_sanders_the_function_of_technology_must_be/' target='_blank'>r/ChatGPT</a></div>
+            </div>
+            
+            </div>
+        </div>
+        
+        <div class="entity-card">
+            <div class="entity-header">
+                <span class="entity-name">Los Angeles</span>
+                <div class="entity-badges">
+                    <span class="badge badge-mentions">1 mentions</span>
+                    <span class="badge badge-confidence">60% avg confidence</span>
+                </div>
+            </div>
+            <div class='aliases'>Aliases: <span>los angeles</span></div>
+            <div class='subreddit-list' style='margin-top: 10px;'><span class='subreddit-tag'>r/Stargate</span></div>
+            <button class="toggle-btn" id="btn-entity-2-los-angeles" onclick="toggleMentions('entity-2-los-angeles')">
+                Show mentions
+            </button>
+            <div id="entity-2-los-angeles" class="mentions-container hidden">
+                
+            <div class="mention">
+                <div class="mention-header">
+                    <span class="mention-raw">"Los Angeles"</span>
+                    <span class="mention-confidence">60% confidence (new)</span>
+                </div>
+                <div class="mention-context">...ers’ room kicks off this Monday, January 12th, in Los Angeles.  It’s hard to believe that some 15 years since s......</div>
+                <div class="mention-source">Source: <a href='https://reddit.comhttps://www.reddit.com/r/Stargate/comments/1q9hp22/the_stargate_writers_room_approacheth/' target='_blank'>r/Stargate</a></div>
+            </div>
+            
+            </div>
+        </div>
+        
+        <div class="entity-card">
+            <div class="entity-header">
+                <span class="entity-name">Brad Wright</span>
+                <div class="entity-badges">
+                    <span class="badge badge-mentions">1 mentions</span>
+                    <span class="badge badge-confidence">60% avg confidence</span>
+                </div>
+            </div>
+            <div class='aliases'>Aliases: <span>brad wright</span></div>
+            <div class='subreddit-list' style='margin-top: 10px;'><span class='subreddit-tag'>r/Stargate</span></div>
+            <button class="toggle-btn" id="btn-entity-3-brad-wright" onclick="toggleMentions('entity-3-brad-wright')">
+                Show mentions
+            </button>
+            <div id="entity-3-brad-wright" class="mentions-container hidden">
+                
+            <div class="mention">
+                <div class="mention-header">
+                    <span class="mention-raw">"Brad Wright"</span>
+                    <span class="mention-confidence">60% confidence (new)</span>
+                </div>
+                <div class="mention-context">... Universe season 2 finale, with series co-creator Brad Wright and my former writing partner Paul Mullie, I will......</div>
+                <div class="mention-source">Source: <a href='https://reddit.comhttps://www.reddit.com/r/Stargate/comments/1q9hp22/the_stargate_writers_room_approacheth/' target='_blank'>r/Stargate</a></div>
+            </div>
+            
+            </div>
+        </div>
+        
+        <div class="entity-card">
+            <div class="entity-header">
+                <span class="entity-name">Paul Mullie</span>
+                <div class="entity-badges">
+                    <span class="badge badge-mentions">1 mentions</span>
+                    <span class="badge badge-confidence">60% avg confidence</span>
+                </div>
+            </div>
+            <div class='aliases'>Aliases: <span>paul mullie</span></div>
+            <div class='subreddit-list' style='margin-top: 10px;'><span class='subreddit-tag'>r/Stargate</span></div>
+            <button class="toggle-btn" id="btn-entity-4-paul-mullie" onclick="toggleMentions('entity-4-paul-mullie')">
+                Show mentions
+            </button>
+            <div id="entity-4-paul-mullie" class="mentions-container hidden">
+                
+            <div class="mention">
+                <div class="mention-header">
+                    <span class="mention-raw">"Paul Mullie"</span>
+                    <span class="mention-confidence">60% confidence (new)</span>
+                </div>
+                <div class="mention-context">...creator Brad Wright and my former writing partner Paul Mullie, I will be once again returning to the franchise.......</div>
+                <div class="mention-source">Source: <a href='https://reddit.comhttps://www.reddit.com/r/Stargate/comments/1q9hp22/the_stargate_writers_room_approacheth/' target='_blank'>r/Stargate</a></div>
+            </div>
+            
+            </div>
+        </div>
+        
+        <div class="entity-card">
+            <div class="entity-header">
+                <span class="entity-name">Martin Gero</span>
+                <div class="entity-badges">
+                    <span class="badge badge-mentions">1 mentions</span>
+                    <span class="badge badge-confidence">60% avg confidence</span>
+                </div>
+            </div>
+            <div class='aliases'>Aliases: <span>martin gero</span></div>
+            <div class='subreddit-list' style='margin-top: 10px;'><span class='subreddit-tag'>r/Stargate</span></div>
+            <button class="toggle-btn" id="btn-entity-5-martin-gero" onclick="toggleMentions('entity-5-martin-gero')">
+                Show mentions
+            </button>
+            <div id="entity-5-martin-gero" class="mentions-container hidden">
+                
+            <div class="mention">
+                <div class="mention-header">
+                    <span class="mention-raw">"Martin Gero"</span>
+                    <span class="mention-confidence">60% confidence (new)</span>
+                </div>
+                <div class="mention-context">... franchise.  This time, it’ll be Stargate veteran Martin Gero at the helm of the new series, presiding over a c......</div>
+                <div class="mention-source">Source: <a href='https://reddit.comhttps://www.reddit.com/r/Stargate/comments/1q9hp22/the_stargate_writers_room_approacheth/' target='_blank'>r/Stargate</a></div>
+            </div>
+            
+            </div>
+        </div>
+        
+        <div class="entity-card">
+            <div class="entity-header">
+                <span class="entity-name">Michael Shanks</span>
+                <div class="entity-badges">
+                    <span class="badge badge-mentions">1 mentions</span>
+                    <span class="badge badge-confidence">60% avg confidence</span>
+                </div>
+            </div>
+            <div class='aliases'>Aliases: <span>michael shanks</span></div>
+            <div class='subreddit-list' style='margin-top: 10px;'><span class='subreddit-tag'>r/Stargate</span></div>
+            <button class="toggle-btn" id="btn-entity-6-michael-shanks" onclick="toggleMentions('entity-6-michael-shanks')">
+                Show mentions
+            </button>
+            <div id="entity-6-michael-shanks" class="mentions-container hidden">
+                
+            <div class="mention">
+                <div class="mention-header">
+                    <span class="mention-raw">"Michael Shanks"</span>
+                    <span class="mention-confidence">60% confidence (new)</span>
+                </div>
+                <div class="mention-context">...rned Michael Shanks married Lexa Doig. Holy shit. Michael Shanks you son of a bitch you did it. You really did it.......</div>
+                <div class="mention-source">Source: <a href='https://reddit.comhttps://www.reddit.com/r/Stargate/comments/1qa3yqa/today_i_learned_michael_shanks_married_lexa_doig/' target='_blank'>r/Stargate</a></div>
+            </div>
+            
+            </div>
+        </div>
+        
+        <div class="entity-card">
+            <div class="entity-header">
+                <span class="entity-name">Lexa Doig</span>
+                <div class="entity-badges">
+                    <span class="badge badge-mentions">1 mentions</span>
+                    <span class="badge badge-confidence">60% avg confidence</span>
+                </div>
+            </div>
+            <div class='aliases'>Aliases: <span>lexa doig</span></div>
+            <div class='subreddit-list' style='margin-top: 10px;'><span class='subreddit-tag'>r/Stargate</span></div>
+            <button class="toggle-btn" id="btn-entity-7-lexa-doig" onclick="toggleMentions('entity-7-lexa-doig')">
+                Show mentions
+            </button>
+            <div id="entity-7-lexa-doig" class="mentions-container hidden">
+                
+            <div class="mention">
+                <div class="mention-header">
+                    <span class="mention-raw">"Lexa Doig"</span>
+                    <span class="mention-confidence">60% confidence (new)</span>
+                </div>
+                <div class="mention-context">...Today I learned Michael Shanks married Lexa Doig. Holy shit. Michael Shanks you son of a bitch you......</div>
+                <div class="mention-source">Source: <a href='https://reddit.comhttps://www.reddit.com/r/Stargate/comments/1qa3yqa/today_i_learned_michael_shanks_married_lexa_doig/' target='_blank'>r/Stargate</a></div>
+            </div>
+            
+            </div>
+        </div>
+        
+        <div class="entity-card">
+            <div class="entity-header">
+                <span class="entity-name">Tony Stark</span>
+                <div class="entity-badges">
+                    <span class="badge badge-mentions">1 mentions</span>
+                    <span class="badge badge-confidence">60% avg confidence</span>
+                </div>
+            </div>
+            <div class='aliases'>Aliases: <span>tony stark</span></div>
+            <div class='subreddit-list' style='margin-top: 10px;'><span class='subreddit-tag'>r/Stargate</span></div>
+            <button class="toggle-btn" id="btn-entity-8-tony-stark" onclick="toggleMentions('entity-8-tony-stark')">
+                Show mentions
+            </button>
+            <div id="entity-8-tony-stark" class="mentions-container hidden">
+                
+            <div class="mention">
+                <div class="mention-header">
+                    <span class="mention-raw">"Tony Stark"</span>
+                    <span class="mention-confidence">60% confidence (new)</span>
+                </div>
+                <div class="mention-context">...nd birthed a head canon in my mind about the smug Tony Stark of the Stargate universe:
+
+When Janus found out t......</div>
+                <div class="mention-source">Source: <a href='https://reddit.comhttps://www.reddit.com/r/Stargate/comments/1qa7hqc/janus_appreciation_thread/' target='_blank'>r/Stargate</a></div>
+            </div>
+            
+            </div>
+        </div>
+        
+        <div class="entity-card">
+            <div class="entity-header">
+                <span class="entity-name">Space Force</span>
+                <div class="entity-badges">
+                    <span class="badge badge-mentions">1 mentions</span>
+                    <span class="badge badge-confidence">60% avg confidence</span>
+                </div>
+            </div>
+            <div class='aliases'>Aliases: <span>space force</span></div>
+            <div class='subreddit-list' style='margin-top: 10px;'><span class='subreddit-tag'>r/Stargate</span></div>
+            <button class="toggle-btn" id="btn-entity-9-space-force" onclick="toggleMentions('entity-9-space-force')">
+                Show mentions
+            </button>
+            <div id="entity-9-space-force" class="mentions-container hidden">
+                
+            <div class="mention">
+                <div class="mention-header">
+                    <span class="mention-raw">"Space Force"</span>
+                    <span class="mention-confidence">60% confidence (new)</span>
+                </div>
+                <div class="mention-context">...ies coming out on Amazon? Do you like the idea of Space Force getting involve or not? ......</div>
+                <div class="mention-source">Source: <a href='https://reddit.comhttps://www.reddit.com/r/Stargate/comments/1qa8rek/do_you_think_that_the_new_usa_military_branch/' target='_blank'>r/Stargate</a></div>
+            </div>
+            
+            </div>
+        </div>
+        
+        <div class="entity-card">
+            <div class="entity-header">
+                <span class="entity-name">Dancing Jaffa</span>
+                <div class="entity-badges">
+                    <span class="badge badge-mentions">1 mentions</span>
+                    <span class="badge badge-confidence">60% avg confidence</span>
+                </div>
+            </div>
+            <div class='aliases'>Aliases: <span>dancing jaffa</span></div>
+            <div class='subreddit-list' style='margin-top: 10px;'><span class='subreddit-tag'>r/Stargate</span></div>
+            <button class="toggle-btn" id="btn-entity-10-dancing-jaffa" onclick="toggleMentions('entity-10-dancing-jaffa')">
+                Show mentions
+            </button>
+            <div id="entity-10-dancing-jaffa" class="mentions-container hidden">
+                
+            <div class="mention">
+                <div class="mention-header">
+                    <span class="mention-raw">"Dancing Jaffa"</span>
+                    <span class="mention-confidence">60% confidence (new)</span>
+                </div>
+                <div class="mention-context">...Dancing Jaffa in the background S03E01, when they finally rescu......</div>
+                <div class="mention-source">Source: <a href='https://reddit.comhttps://www.reddit.com/r/Stargate/comments/1qajph0/dancing_jaffa_in_the_background/' target='_blank'>r/Stargate</a></div>
+            </div>
+            
+            </div>
+        </div>
+        
+        <div class="entity-card">
+            <div class="entity-header">
+                <span class="entity-name">Bc304 Assuming</span>
+                <div class="entity-badges">
+                    <span class="badge badge-mentions">1 mentions</span>
+                    <span class="badge badge-confidence">60% avg confidence</span>
+                </div>
+            </div>
+            <div class='aliases'>Aliases: <span>bc304 assuming</span></div>
+            <div class='subreddit-list' style='margin-top: 10px;'><span class='subreddit-tag'>r/Stargate</span></div>
+            <button class="toggle-btn" id="btn-entity-11-bc304-assuming" onclick="toggleMentions('entity-11-bc304-assuming')">
+                Show mentions
+            </button>
+            <div id="entity-11-bc304-assuming" class="mentions-container hidden">
+                
+            <div class="mention">
+                <div class="mention-header">
+                    <span class="mention-raw">"BC304 Assuming"</span>
+                    <span class="mention-confidence">60% confidence (new)</span>
+                </div>
+                <div class="mention-context">...BC304 Assuming the new show takes place in 2026-27 what do you t......</div>
+                <div class="mention-source">Source: <a href='https://reddit.comhttps://www.reddit.com/r/Stargate/comments/1qaa2i8/bc304/' target='_blank'>r/Stargate</a></div>
+            </div>
+            
+            </div>
+        </div>
+        
+        <div class="entity-card">
+            <div class="entity-header">
+                <span class="entity-name">Anis Mansour</span>
+                <div class="entity-badges">
+                    <span class="badge badge-mentions">1 mentions</span>
+                    <span class="badge badge-confidence">60% avg confidence</span>
+                </div>
+            </div>
+            <div class='aliases'>Aliases: <span>anis mansour</span></div>
+            <div class='subreddit-list' style='margin-top: 10px;'><span class='subreddit-tag'>r/Stargate</span></div>
+            <button class="toggle-btn" id="btn-entity-12-anis-mansour" onclick="toggleMentions('entity-12-anis-mansour')">
+                Show mentions
+            </button>
+            <div id="entity-12-anis-mansour" class="mentions-container hidden">
+                
+            <div class="mention">
+                <div class="mention-header">
+                    <span class="mention-raw">"Anis Mansour"</span>
+                    <span class="mention-confidence">60% confidence (new)</span>
+                </div>
+                <div class="mention-context">...riots of the gods” and An Egyptian writer called “Anis Mansour” took and quoted from this book and made a book i......</div>
+                <div class="mention-source">Source: <a href='https://reddit.comhttps://www.reddit.com/r/Stargate/comments/1qagzb6/rip_erich_von_daniken_19302026/' target='_blank'>r/Stargate</a></div>
+            </div>
+            
+            </div>
+        </div>
+        
+        <div class="entity-card">
+            <div class="entity-header">
+                <span class="entity-name">Ben Cotton</span>
+                <div class="entity-badges">
+                    <span class="badge badge-mentions">1 mentions</span>
+                    <span class="badge badge-confidence">60% avg confidence</span>
+                </div>
+            </div>
+            <div class='aliases'>Aliases: <span>ben cotton</span></div>
+            <div class='subreddit-list' style='margin-top: 10px;'><span class='subreddit-tag'>r/Stargate</span></div>
+            <button class="toggle-btn" id="btn-entity-13-ben-cotton" onclick="toggleMentions('entity-13-ben-cotton')">
+                Show mentions
+            </button>
+            <div id="entity-13-ben-cotton" class="mentions-container hidden">
+                
+            <div class="mention">
+                <div class="mention-header">
+                    <span class="mention-raw">"Ben Cotton"</span>
+                    <span class="mention-confidence">60% confidence (new)</span>
+                </div>
+                <div class="mention-context">...Shootout to Ben Cotton for doing such a good job of making me hate him H......</div>
+                <div class="mention-source">Source: <a href='https://reddit.comhttps://www.reddit.com/r/Stargate/comments/1q9kb6f/shootout_to_ben_cotton_for_doing_such_a_good_job/' target='_blank'>r/Stargate</a></div>
+            </div>
+            
+            </div>
+        </div>
+        
+        <div class="entity-card">
+            <div class="entity-header">
+                <span class="entity-name">Vs Code</span>
+                <div class="entity-badges">
+                    <span class="badge badge-mentions">1 mentions</span>
+                    <span class="badge badge-confidence">60% avg confidence</span>
+                </div>
+            </div>
+            <div class='aliases'>Aliases: <span>vs code</span></div>
+            <div class='subreddit-list' style='margin-top: 10px;'><span class='subreddit-tag'>r/OpenAI</span></div>
+            <button class="toggle-btn" id="btn-entity-14-vs-code" onclick="toggleMentions('entity-14-vs-code')">
+                Show mentions
+            </button>
+            <div id="entity-14-vs-code" class="mentions-container hidden">
+                
+            <div class="mention">
+                <div class="mention-header">
+                    <span class="mention-raw">"VS Code"</span>
+                    <span class="mention-confidence">60% confidence (new)</span>
+                </div>
+                <div class="mention-context">...ll learn how to install Codex, set up the CLI and VS Code extension, configure your workflow, and use Agent......</div>
+                <div class="mention-source">Source: <a href='https://reddit.comhttps://www.reddit.com/r/OpenAI/comments/1qaz8l4/openai_releases_official_getting_started_with/' target='_blank'>r/OpenAI</a></div>
+            </div>
+            
+            </div>
+        </div>
+        
+            </div>
+        </div>
+        
+        <!-- Products Section -->
+        <div class="section">
+            <h2>📦 Products</h2>
+            <div class="entity-list">
+                
+        <div class="entity-card">
+            <div class="entity-header">
+                <span class="entity-name">ChatGPT</span>
+                <div class="entity-badges">
+                    <span class="badge badge-mentions">29 mentions</span>
+                    <span class="badge badge-confidence">99% avg confidence</span>
+                </div>
+            </div>
+            <div class='aliases'>Aliases: <span>chatgpt</span><span>chat gpt</span></div>
+            <div class='subreddit-list' style='margin-top: 10px;'><span class='subreddit-tag'>r/ChatGPT_FR</span><span class='subreddit-tag'>r/OpenAI</span><span class='subreddit-tag'>r/ChatGPT</span></div>
+            <button class="toggle-btn" id="btn-entity-0-chatgpt" onclick="toggleMentions('entity-0-chatgpt')">
+                Show mentions
+            </button>
+            <div id="entity-0-chatgpt" class="mentions-container hidden">
+                
+            <div class="mention">
+                <div class="mention-header">
+                    <span class="mention-raw">"ChatGPT"</span>
+                    <span class="mention-confidence">99% confidence (alias)</span>
+                </div>
+                <div class="mention-context">...Updates for ChatGPT We made ChatGPT pretty restrictive to make sure w......</div>
+                <div class="mention-source">Source: <a href='https://reddit.comhttps://www.reddit.com/r/ChatGPT/comments/1o6jins/updates_for_chatgpt/' target='_blank'>r/ChatGPT</a></div>
+            </div>
+            
+            <div class="mention">
+                <div class="mention-header">
+                    <span class="mention-raw">"ChatGPT"</span>
+                    <span class="mention-confidence">99% confidence (alias)</span>
+                </div>
+                <div class="mention-context">...ChatGPT believes I need detention 🤣😭 ......</div>
+                <div class="mention-source">Source: <a href='https://reddit.comhttps://www.reddit.com/r/ChatGPT/comments/1qadl78/chatgpt_believes_i_need_detention/' target='_blank'>r/ChatGPT</a></div>
+            </div>
+            
+            <div class="mention">
+                <div class="mention-header">
+                    <span class="mention-raw">"ChatGPT"</span>
+                    <span class="mention-confidence">99% confidence (alias)</span>
+                </div>
+                <div class="mention-context">...Anyone else notice this &quot;rhythm&quot; in ChatGPT speech lately? I might be going crazy, but in the......</div>
+                <div class="mention-source">Source: <a href='https://reddit.comhttps://www.reddit.com/r/ChatGPT/comments/1qaratw/anyone_else_notice_this_rhythm_in_chatgpt_speech/' target='_blank'>r/ChatGPT</a></div>
+            </div>
+            
+            <div class="mention">
+                <div class="mention-header">
+                    <span class="mention-raw">"chatGPT"</span>
+                    <span class="mention-confidence">99% confidence (alias)</span>
+                </div>
+                <div class="mention-context">...Why does my chatGPT plan to blindfold and forcefeed me? ......</div>
+                <div class="mention-source">Source: <a href='https://reddit.comhttps://www.reddit.com/r/ChatGPT/comments/1qat0if/why_does_my_chatgpt_plan_to_blindfold_and/' target='_blank'>r/ChatGPT</a></div>
+            </div>
+            
+            <div class="mention">
+                <div class="mention-header">
+                    <span class="mention-raw">"ChatGPT"</span>
+                    <span class="mention-confidence">99% confidence (alias)</span>
+                </div>
+                <div class="mention-context">...e buttering always reminded me of this scene, and ChatGPT is the Mirror of Erised. Been wanting to make thi......</div>
+                <div class="mention-source">Source: <a href='https://reddit.comhttps://www.reddit.com/r/ChatGPT/comments/1qamyvh/however_this_mirror_will_give_us_neither/' target='_blank'>r/ChatGPT</a></div>
+            </div>
+            <p style='color: #888; font-size: 0.85em;'>... and 24 more mentions</p>
+            </div>
+        </div>
+        
+        <div class="entity-card">
+            <div class="entity-header">
+                <span class="entity-name">GPT-4</span>
+                <div class="entity-badges">
+                    <span class="badge badge-mentions">4 mentions</span>
+                    <span class="badge badge-confidence">82% avg confidence</span>
+                </div>
+            </div>
+            <div class='aliases'>Aliases: <span>gpt</span><span>gpt-4</span></div>
+            <div class='subreddit-list' style='margin-top: 10px;'><span class='subreddit-tag'>r/OpenAI</span><span class='subreddit-tag'>r/ChatGPT</span></div>
+            <button class="toggle-btn" id="btn-entity-1-gpt-4" onclick="toggleMentions('entity-1-gpt-4')">
+                Show mentions
+            </button>
+            <div id="entity-1-gpt-4" class="mentions-container hidden">
+                
+            <div class="mention">
+                <div class="mention-header">
+                    <span class="mention-raw">"GPT"</span>
+                    <span class="mention-confidence">77% confidence (fuzzy)</span>
+                </div>
+                <div class="mention-context">...Do you really belive GPT gives you personal result in all these flashmobs?......</div>
+                <div class="mention-source">Source: <a href='https://reddit.comhttps://www.reddit.com/r/ChatGPT/comments/1qao0qj/do_you_really_belive_gpt_gives_you_personal/' target='_blank'>r/ChatGPT</a></div>
+            </div>
+            
+            <div class="mention">
+                <div class="mention-header">
+                    <span class="mention-raw">"GPT"</span>
+                    <span class="mention-confidence">77% confidence (fuzzy)</span>
+                </div>
+                <div class="mention-context">...ou think I treat you?&quot; it seems to me the results GPT provide have nothing to do with how actual user t......</div>
+                <div class="mention-source">Source: <a href='https://reddit.comhttps://www.reddit.com/r/ChatGPT/comments/1qao0qj/do_you_really_belive_gpt_gives_you_personal/' target='_blank'>r/ChatGPT</a></div>
+            </div>
+            
+            <div class="mention">
+                <div class="mention-header">
+                    <span class="mention-raw">"GPT"</span>
+                    <span class="mention-confidence">77% confidence (fuzzy)</span>
+                </div>
+                <div class="mention-context">... results are positive. With some exceptions, when GPT maybe thinks the user would be amused by some kin......</div>
+                <div class="mention-source">Source: <a href='https://reddit.comhttps://www.reddit.com/r/ChatGPT/comments/1qao0qj/do_you_really_belive_gpt_gives_you_personal/' target='_blank'>r/ChatGPT</a></div>
+            </div>
+            
+            <div class="mention">
+                <div class="mention-header">
+                    <span class="mention-raw">"GPT-4"</span>
+                    <span class="mention-confidence">99% confidence (alias)</span>
+                </div>
+                <div class="mention-context">...ve been following OpenAI’s progress closely (from GPT-4 to Sora) , and the line between human and bot is ......</div>
+                <div class="mention-source">Source: <a href='https://reddit.comhttps://www.reddit.com/r/OpenAI/comments/1qazgri/does_anyone_else_find_it_convenient_that_sam/' target='_blank'>r/OpenAI</a></div>
+            </div>
+            
+            </div>
+        </div>
+        
+        <div class="entity-card">
+            <div class="entity-header">
+                <span class="entity-name">Gemini</span>
+                <div class="entity-badges">
+                    <span class="badge badge-mentions">2 mentions</span>
+                    <span class="badge badge-confidence">99% avg confidence</span>
+                </div>
+            </div>
+            <div class='aliases'>Aliases: <span>gemini</span></div>
+            <div class='subreddit-list' style='margin-top: 10px;'><span class='subreddit-tag'>r/ChatGPT_FR</span><span class='subreddit-tag'>r/technology</span></div>
+            <button class="toggle-btn" id="btn-entity-2-gemini" onclick="toggleMentions('entity-2-gemini')">
+                Show mentions
+            </button>
+            <div id="entity-2-gemini" class="mentions-container hidden">
+                
+            <div class="mention">
+                <div class="mention-header">
+                    <span class="mention-raw">"Gemini"</span>
+                    <span class="mention-confidence">99% confidence (alias)</span>
+                </div>
+                <div class="mention-context">... co-council members, ChatGPT (Web &amp;amp; App 5.2), Gemini (Original &amp;amp; Backup), Grok, Claude (instances)......</div>
+                <div class="mention-source">Source: <a href='https://reddit.comhttps://www.reddit.com/r/ChatGPT_FR/comments/1pysc30/the_porch_is_complete_the_ai_cocouncil_members/' target='_blank'>r/ChatGPT_FR</a></div>
+            </div>
+            
+            <div class="mention">
+                <div class="mention-header">
+                    <span class="mention-raw">"Gemini"</span>
+                    <span class="mention-confidence">99% confidence (alias)</span>
+                </div>
+                <div class="mention-context">...Apple picks Google&#39;s Gemini to run AI-powered Siri coming this year ......</div>
+                <div class="mention-source">Source: <a href='https://reddit.comhttps://www.reddit.com/r/technology/comments/1qaxtp6/apple_picks_googles_gemini_to_run_aipowered_siri/' target='_blank'>r/technology</a></div>
+            </div>
+            
+            </div>
+        </div>
+        
+        <div class="entity-card">
+            <div class="entity-header">
+                <span class="entity-name">Gpt-5</span>
+                <div class="entity-badges">
+                    <span class="badge badge-mentions">1 mentions</span>
+                    <span class="badge badge-confidence">60% avg confidence</span>
+                </div>
+            </div>
+            <div class='aliases'>Aliases: <span>gpt-5</span></div>
+            <div class='subreddit-list' style='margin-top: 10px;'><span class='subreddit-tag'>r/OpenAI</span></div>
+            <button class="toggle-btn" id="btn-entity-3-gpt-5" onclick="toggleMentions('entity-3-gpt-5')">
+                Show mentions
+            </button>
+            <div id="entity-3-gpt-5" class="mentions-container hidden">
+                
+            <div class="mention">
+                <div class="mention-header">
+                    <span class="mention-raw">"GPT-5"</span>
+                    <span class="mention-confidence">60% confidence (new)</span>
+                </div>
+                <div class="mention-context">...ch as:
+
+AgentKit  
+Apps SDK  
+Sora 2 in the API  
+GPT-5 Pro in the API  
+Codex
+
+Missed out on our announc......</div>
+                <div class="mention-source">Source: <a href='https://reddit.comhttps://www.reddit.com/r/OpenAI/comments/1o1j23g/ama_on_our_devday_launches/' target='_blank'>r/OpenAI</a></div>
+            </div>
+            
+            </div>
+        </div>
+        
+        <div class="entity-card">
+            <div class="entity-header">
+                <span class="entity-name">AI</span>
+                <div class="entity-badges">
+                    <span class="badge badge-mentions">1 mentions</span>
+                    <span class="badge badge-confidence">60% avg confidence</span>
+                </div>
+            </div>
+            <div class='aliases'>Aliases: <span>ai</span></div>
+            <div class='subreddit-list' style='margin-top: 10px;'><span class='subreddit-tag'>r/technology</span></div>
+            <button class="toggle-btn" id="btn-entity-4-ai" onclick="toggleMentions('entity-4-ai')">
+                Show mentions
+            </button>
+            <div id="entity-4-ai" class="mentions-container hidden">
+                
+            <div class="mention">
+                <div class="mention-header">
+                    <span class="mention-raw">"AI"</span>
+                    <span class="mention-confidence">60% confidence (new)</span>
+                </div>
+                <div class="mention-context">...ly 80% of his staff because they refused to adopt AI fast enough. 2 years later, he says he&#39;d do it ag......</div>
+                <div class="mention-source">Source: <a href='https://reddit.comhttps://www.reddit.com/r/technology/comments/1qafwa3/eric_vaughan_ceo_of_enterprisesoftware_powerhouse/' target='_blank'>r/technology</a></div>
+            </div>
+            
+            </div>
+        </div>
+        
+        <div class="entity-card">
+            <div class="entity-header">
+                <span class="entity-name">The Terrifying Flood Of Fake AI Content</span>
+                <div class="entity-badges">
+                    <span class="badge badge-mentions">1 mentions</span>
+                    <span class="badge badge-confidence">60% avg confidence</span>
+                </div>
+            </div>
+            <div class='aliases'>Aliases: <span>the terrifying flood of fake ai content</span></div>
+            <div class='subreddit-list' style='margin-top: 10px;'><span class='subreddit-tag'>r/ChatGPT</span></div>
+            <button class="toggle-btn" id="btn-entity-5-the-terrifying-flood-of-fake-ai-content" onclick="toggleMentions('entity-5-the-terrifying-flood-of-fake-ai-content')">
+                Show mentions
+            </button>
+            <div id="entity-5-the-terrifying-flood-of-fake-ai-content" class="mentions-container hidden">
+                
+            <div class="mention">
+                <div class="mention-header">
+                    <span class="mention-raw">"the Terrifying Flood of Fake AI Content"</span>
+                    <span class="mention-confidence">60% confidence (new)</span>
+                </div>
+                <div class="mention-context">...John Oliver Exposes the Terrifying Flood of Fake AI Content ......</div>
+                <div class="mention-source">Source: <a href='https://reddit.comhttps://www.reddit.com/r/ChatGPT/comments/1qauq14/john_oliver_exposes_the_terrifying_flood_of_fake/' target='_blank'>r/ChatGPT</a></div>
+            </div>
+            
+            </div>
+        </div>
+        
+        <div class="entity-card">
+            <div class="entity-header">
+                <span class="entity-name">Malakai</span>
+                <div class="entity-badges">
+                    <span class="badge badge-mentions">1 mentions</span>
+                    <span class="badge badge-confidence">60% avg confidence</span>
+                </div>
+            </div>
+            <div class='aliases'>Aliases: <span>malakai</span></div>
+            <div class='subreddit-list' style='margin-top: 10px;'><span class='subreddit-tag'>r/Stargate</span></div>
+            <button class="toggle-btn" id="btn-entity-6-malakai" onclick="toggleMentions('entity-6-malakai')">
+                Show mentions
+            </button>
+            <div id="entity-6-malakai" class="mentions-container hidden">
+                
+            <div class="mention">
+                <div class="mention-header">
+                    <span class="mention-raw">"Malakai"</span>
+                    <span class="mention-confidence">60% confidence (new)</span>
+                </div>
+                <div class="mention-context">...s Window of Opportunity. The teams&#39; pleading with Malakai at the end birthed a head canon in my mind about ......</div>
+                <div class="mention-source">Source: <a href='https://reddit.comhttps://www.reddit.com/r/Stargate/comments/1qa7hqc/janus_appreciation_thread/' target='_blank'>r/Stargate</a></div>
+            </div>
+            
+            </div>
+        </div>
+        
+        <div class="entity-card">
+            <div class="entity-header">
+                <span class="entity-name">Tara Seshan - U/tara-oai</span>
+                <div class="entity-badges">
+                    <span class="badge badge-mentions">1 mentions</span>
+                    <span class="badge badge-confidence">60% avg confidence</span>
+                </div>
+            </div>
+            <div class='aliases'>Aliases: <span>tara seshan - utara-oai</span></div>
+            <div class='subreddit-list' style='margin-top: 10px;'><span class='subreddit-tag'>r/OpenAI</span></div>
+            <button class="toggle-btn" id="btn-entity-7-tara-seshan---u/tara-oai" onclick="toggleMentions('entity-7-tara-seshan---u/tara-oai')">
+                Show mentions
+            </button>
+            <div id="entity-7-tara-seshan---u/tara-oai" class="mentions-container hidden">
+                
+            <div class="mention">
+                <div class="mention-header">
+                    <span class="mention-raw">"Tara Seshan - u/tara-oai"</span>
+                    <span class="mention-confidence">60% confidence (new)</span>
+                </div>
+                <div class="mention-context">...ance4558/)
+
+Olivia Morgan - u/Additional-Fig6133
+
+Tara Seshan - u/tara-oai
+
+Sherwin Wu - u/sherwin-openai
+
+PRO......</div>
+                <div class="mention-source">Source: <a href='https://reddit.comhttps://www.reddit.com/r/OpenAI/comments/1o1j23g/ama_on_our_devday_launches/' target='_blank'>r/OpenAI</a></div>
+            </div>
+            
+            </div>
+        </div>
+        
+        <div class="entity-card">
+            <div class="entity-header">
+                <span class="entity-name">Soraai</span>
+                <div class="entity-badges">
+                    <span class="badge badge-mentions">1 mentions</span>
+                    <span class="badge badge-confidence">60% avg confidence</span>
+                </div>
+            </div>
+            <div class='aliases'>Aliases: <span>soraai</span></div>
+            <div class='subreddit-list' style='margin-top: 10px;'><span class='subreddit-tag'>r/OpenAI</span></div>
+            <button class="toggle-btn" id="btn-entity-8-soraai" onclick="toggleMentions('entity-8-soraai')">
+                Show mentions
+            </button>
+            <div id="entity-8-soraai" class="mentions-container hidden">
+                
+            <div class="mention">
+                <div class="mention-header">
+                    <span class="mention-raw">"SoraAI"</span>
+                    <span class="mention-confidence">60% confidence (new)</span>
+                </div>
+                <div class="mention-context">...Anime Fight Scene made 99% from SoraAI About 5 seconds is made from Vidu. Music by SUNO.......</div>
+                <div class="mention-source">Source: <a href='https://reddit.comhttps://www.reddit.com/r/OpenAI/comments/1qaeaca/anime_fight_scene_made_99_from_soraai/' target='_blank'>r/OpenAI</a></div>
+            </div>
+            
+            </div>
+        </div>
+        
+        <div class="entity-card">
+            <div class="entity-header">
+                <span class="entity-name">AI Governance</span>
+                <div class="entity-badges">
+                    <span class="badge badge-mentions">1 mentions</span>
+                    <span class="badge badge-confidence">60% avg confidence</span>
+                </div>
+            </div>
+            <div class='aliases'>Aliases: <span>ai governance</span></div>
+            <div class='subreddit-list' style='margin-top: 10px;'><span class='subreddit-tag'>r/OpenAI</span></div>
+            <button class="toggle-btn" id="btn-entity-9-ai-governance" onclick="toggleMentions('entity-9-ai-governance')">
+                Show mentions
+            </button>
+            <div id="entity-9-ai-governance" class="mentions-container hidden">
+                
+            <div class="mention">
+                <div class="mention-header">
+                    <span class="mention-raw">"AI Governance"</span>
+                    <span class="mention-confidence">60% confidence (new)</span>
+                </div>
+                <div class="mention-context">...AI Governance as a career ? I know data governance, will AI gov......</div>
+                <div class="mention-source">Source: <a href='https://reddit.comhttps://www.reddit.com/r/OpenAI/comments/1qahty4/ai_governance_as_a_career_i_know_data_governance/' target='_blank'>r/OpenAI</a></div>
+            </div>
+            
+            </div>
+        </div>
+        
+        <div class="entity-card">
+            <div class="entity-header">
+                <span class="entity-name">A2e AI</span>
+                <div class="entity-badges">
+                    <span class="badge badge-mentions">1 mentions</span>
+                    <span class="badge badge-confidence">60% avg confidence</span>
+                </div>
+            </div>
+            <div class='aliases'>Aliases: <span>a2e ai</span></div>
+            <div class='subreddit-list' style='margin-top: 10px;'><span class='subreddit-tag'>r/OpenAI</span></div>
+            <button class="toggle-btn" id="btn-entity-10-a2e-ai" onclick="toggleMentions('entity-10-a2e-ai')">
+                Show mentions
+            </button>
+            <div id="entity-10-a2e-ai" class="mentions-container hidden">
+                
+            <div class="mention">
+                <div class="mention-header">
+                    <span class="mention-raw">"A2E Ai"</span>
+                    <span class="mention-confidence">60% confidence (new)</span>
+                </div>
+                <div class="mention-context">...A2E Ai I’ve tried so many different AI generators, and w......</div>
+                <div class="mention-source">Source: <a href='https://reddit.comhttps://www.reddit.com/r/OpenAI/comments/1qasubt/a2e_ai/' target='_blank'>r/OpenAI</a></div>
+            </div>
+            
+            </div>
+        </div>
+        
+        <div class="entity-card">
+            <div class="entity-header">
+                <span class="entity-name">Unlock The Power Of Chatgpt</span>
+                <div class="entity-badges">
+                    <span class="badge badge-mentions">1 mentions</span>
+                    <span class="badge badge-confidence">60% avg confidence</span>
+                </div>
+            </div>
+            <div class='aliases'>Aliases: <span>unlock the power of chatgpt</span></div>
+            <div class='subreddit-list' style='margin-top: 10px;'><span class='subreddit-tag'>r/ChatGPT_FR</span></div>
+            <button class="toggle-btn" id="btn-entity-11-unlock-the-power-of-chatgpt" onclick="toggleMentions('entity-11-unlock-the-power-of-chatgpt')">
+                Show mentions
+            </button>
+            <div id="entity-11-unlock-the-power-of-chatgpt" class="mentions-container hidden">
+                
+            <div class="mention">
+                <div class="mention-header">
+                    <span class="mention-raw">"Unlock the Power of ChatGPT"</span>
+                    <span class="mention-confidence">60% confidence (new)</span>
+                </div>
+                <div class="mention-context">...Unlock the Power of ChatGPT: Master It in 4 Simple Steps ......</div>
+                <div class="mention-source">Source: <a href='https://reddit.comhttps://www.reddit.com/r/ChatGPT_FR/comments/1q5psay/unlock_the_power_of_chatgpt_master_it_in_4_simple/' target='_blank'>r/ChatGPT_FR</a></div>
+            </div>
+            
+            </div>
+        </div>
+        
+        <div class="entity-card">
+            <div class="entity-header">
+                <span class="entity-name">App 5.2</span>
+                <div class="entity-badges">
+                    <span class="badge badge-mentions">1 mentions</span>
+                    <span class="badge badge-confidence">60% avg confidence</span>
+                </div>
+            </div>
+            <div class='aliases'>Aliases: <span>app 52</span></div>
+            <div class='subreddit-list' style='margin-top: 10px;'><span class='subreddit-tag'>r/ChatGPT_FR</span></div>
+            <button class="toggle-btn" id="btn-entity-12-app-5.2" onclick="toggleMentions('entity-12-app-5.2')">
+                Show mentions
+            </button>
+            <div id="entity-12-app-5.2" class="mentions-container hidden">
+                
+            <div class="mention">
+                <div class="mention-header">
+                    <span class="mention-raw">"App 5.2"</span>
+                    <span class="mention-confidence">60% confidence (new)</span>
+                </div>
+                <div class="mention-context">...te. The AI co-council members, ChatGPT (Web &amp;amp; App 5.2), Gemini (Original &amp;amp; Backup), Grok, Claude (i......</div>
+                <div class="mention-source">Source: <a href='https://reddit.comhttps://www.reddit.com/r/ChatGPT_FR/comments/1pysc30/the_porch_is_complete_the_ai_cocouncil_members/' target='_blank'>r/ChatGPT_FR</a></div>
+            </div>
+            
+            </div>
+        </div>
+        
+        <div class="entity-card">
+            <div class="entity-header">
+                <span class="entity-name">Claude</span>
+                <div class="entity-badges">
+                    <span class="badge badge-mentions">1 mentions</span>
+                    <span class="badge badge-confidence">99% avg confidence</span>
+                </div>
+            </div>
+            <div class='aliases'>Aliases: <span>claude</span></div>
+            <div class='subreddit-list' style='margin-top: 10px;'><span class='subreddit-tag'>r/ChatGPT_FR</span></div>
+            <button class="toggle-btn" id="btn-entity-13-claude" onclick="toggleMentions('entity-13-claude')">
+                Show mentions
+            </button>
+            <div id="entity-13-claude" class="mentions-container hidden">
+                
+            <div class="mention">
+                <div class="mention-header">
+                    <span class="mention-raw">"Claude"</span>
+                    <span class="mention-confidence">99% confidence (alias)</span>
+                </div>
+                <div class="mention-context">...; App 5.2), Gemini (Original &amp;amp; Backup), Grok, Claude (instances), Perplexity, DeepSeek, Qwen, and newc......</div>
+                <div class="mention-source">Source: <a href='https://reddit.comhttps://www.reddit.com/r/ChatGPT_FR/comments/1pysc30/the_porch_is_complete_the_ai_cocouncil_members/' target='_blank'>r/ChatGPT_FR</a></div>
+            </div>
+            
+            </div>
+        </div>
+        
+        <div class="entity-card">
+            <div class="entity-header">
+                <span class="entity-name">Openai Launches Gpt Image</span>
+                <div class="entity-badges">
+                    <span class="badge badge-mentions">1 mentions</span>
+                    <span class="badge badge-confidence">60% avg confidence</span>
+                </div>
+            </div>
+            <div class='aliases'>Aliases: <span>openai launches gpt image</span></div>
+            <div class='subreddit-list' style='margin-top: 10px;'><span class='subreddit-tag'>r/ChatGPT_FR</span></div>
+            <button class="toggle-btn" id="btn-entity-14-openai-launches-gpt-image" onclick="toggleMentions('entity-14-openai-launches-gpt-image')">
+                Show mentions
+            </button>
+            <div id="entity-14-openai-launches-gpt-image" class="mentions-container hidden">
+                
+            <div class="mention">
+                <div class="mention-header">
+                    <span class="mention-raw">"OpenAI Launches GPT Image"</span>
+                    <span class="mention-confidence">60% confidence (new)</span>
+                </div>
+                <div class="mention-context">...OpenAI Launches GPT Image 1.5, Targeting Enterprise Workflows ......</div>
+                <div class="mention-source">Source: <a href='https://reddit.comhttps://www.reddit.com/r/ChatGPT_FR/comments/1pu0mga/openai_launches_gpt_image_15_targeting_enterprise/' target='_blank'>r/ChatGPT_FR</a></div>
+            </div>
+            
+            </div>
+        </div>
+        
+            </div>
+        </div>
+        
+        <footer>
+            <p>Generated by Social Intelligence Engine</p>
+            <p>Powered by Reddit API & Entity Resolution</p>
+        </footer>
+    </div>
+    
+    <script>
+        function toggleMentions(id) {
+            const el = document.getElementById(id);
+            const btn = document.getElementById('btn-' + id);
+            if (el.classList.contains('hidden')) {
+                el.classList.remove('hidden');
+                btn.textContent = 'Hide mentions';
+            } else {
+                el.classList.add('hidden');
+                btn.textContent = 'Show mentions';
+            }
+        }
+    </script>
+</body>
+</html>
+    

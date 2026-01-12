@@ -1,0 +1,21 @@
+version: '3.9'
+
+services:
+  api:
+    build: .
+    container_name: social-intelligence
+    ports:
+      - '8000:8000'
+    volumes:
+      - ./data:/app/data
+    environment:
+      - PYTHONUNBUFFERED=1
+      - DATABASE_PATH=/app/data/social_intel.db
+      - DOMAIN=openai.com
+    command: >
+      sh -c "
+      echo '🚀 Running initial pipeline...' &&
+      python main.py ${DOMAIN} &&
+      echo '✅ Pipeline complete. Starting FastAPI...' &&
+      exec python -m uvicorn api.main:app --host 0.0.0.0 --port 8000
+      "

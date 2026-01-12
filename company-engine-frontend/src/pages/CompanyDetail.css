@@ -1,0 +1,212 @@
+.company-detail {
+  padding: 3rem 4rem;
+  max-width: 1400px;
+  margin: 0 auto;
+}
+
+.company-detail .header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 3rem;
+  padding-bottom: 1.5rem;
+  border-bottom: 1px solid #333;
+}
+
+.company-detail .header-content h1 {
+  font-size: 3rem;
+  margin-bottom: 0.5rem;
+  color: #ffffff;
+  font-weight: 700;
+  text-shadow:
+    0 0 15px rgba(255, 255, 255, 0.3),
+    0 0 30px rgba(229, 9, 20, 0.2);
+}
+
+.company-detail .domain-link {
+  color: #E50914;
+  font-size: 1.1rem;
+  font-weight: 500;
+  transition: all 0.3s;
+  text-shadow: 0 0 8px rgba(229, 9, 20, 0.4);
+}
+
+.company-detail .domain-link:hover {
+  color: #f40612;
+  text-shadow:
+    0 0 15px rgba(229, 9, 20, 0.6),
+    0 0 30px rgba(229, 9, 20, 0.4);
+}
+
+.company-detail .btn-primary {
+  background: #E50914;
+  color: #ffffff;
+  padding: 1rem 2.5rem;
+  border-radius: 4px;
+  text-decoration: none;
+  font-weight: 700;
+  font-size: 1.1rem;
+  transition: all 0.3s;
+  text-transform: uppercase;
+  letter-spacing: 0.05rem;
+}
+
+.company-detail .btn-primary:hover {
+  background: #f40612;
+  box-shadow:
+    0 0 20px rgba(229, 9, 20, 0.6),
+    0 0 40px rgba(229, 9, 20, 0.4),
+    0 4px 15px rgba(229, 9, 20, 0.4);
+}
+
+.company-detail .info-section {
+  background: #1a1a1a;
+  padding: 2rem;
+  border-radius: 8px;
+  margin-bottom: 3rem;
+}
+
+.company-detail .info-section p {
+  margin: 1rem 0;
+  font-size: 1.05rem;
+  line-height: 1.6;
+  color: #b3b3b3;
+}
+
+.company-detail .info-section strong {
+  color: #ffffff;
+  margin-right: 0.5rem;
+}
+
+.company-detail .summary-section {
+  margin-bottom: 3rem;
+}
+
+.company-detail .summary-section h2 {
+  font-size: 2rem;
+  margin-bottom: 1.5rem;
+  color: #ffffff;
+  font-weight: 700;
+}
+
+.company-detail .stats-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 1.5rem;
+}
+
+.company-detail .stat-card {
+  background: #1a1a1a;
+  padding: 2rem;
+  border-radius: 8px;
+  text-align: center;
+  border: 1px solid #333;
+  transition: all 0.3s;
+}
+
+.company-detail .stat-card:hover {
+  border-color: #E50914;
+  transform: translateY(-2px);
+  box-shadow:
+    0 0 20px rgba(229, 9, 20, 0.3),
+    0 0 40px rgba(229, 9, 20, 0.2);
+}
+
+.company-detail .stat-value {
+  font-size: 3rem;
+  font-weight: 700;
+  color: #E50914;
+  text-shadow:
+    0 0 10px rgba(229, 9, 20, 0.5),
+    0 0 20px rgba(229, 9, 20, 0.3);
+}
+
+.company-detail .stat-label {
+  color: #b3b3b3;
+  margin-top: 0.5rem;
+  font-size: 1rem;
+  text-transform: uppercase;
+  letter-spacing: 0.05rem;
+}
+
+.company-detail .subreddits-section h2 {
+  font-size: 2rem;
+  margin-bottom: 1.5rem;
+  color: #ffffff;
+  font-weight: 700;
+}
+
+.company-detail .subreddit-list {
+  display: grid;
+  gap: 1.5rem;
+}
+
+.company-detail .subreddit-card {
+  background: #1a1a1a;
+  padding: 2rem;
+  border-radius: 8px;
+  border: 1px solid #333;
+  transition: all 0.3s;
+}
+
+.company-detail .subreddit-card:hover {
+  border-color: #E50914;
+  transform: translateX(5px);
+  box-shadow:
+    0 0 20px rgba(229, 9, 20, 0.3),
+    0 0 40px rgba(229, 9, 20, 0.15);
+}
+
+.company-detail .subreddit-card h3 {
+  color: #E50914;
+  margin-bottom: 1rem;
+  font-size: 1.5rem;
+  font-weight: 600;
+  text-shadow: 0 0 10px rgba(229, 9, 20, 0.4);
+}
+
+.company-detail .subreddit-card p {
+  color: #b3b3b3;
+  line-height: 1.6;
+}
+
+.company-detail .subreddit-stats {
+  display: flex;
+  gap: 2rem;
+  margin-top: 1.5rem;
+  color: #808080;
+  font-size: 0.95rem;
+}
+
+.company-detail.loading,
+.company-detail.error {
+  text-align: center;
+  padding: 5rem 2rem;
+  font-size: 1.5rem;
+  color: #ffffff;
+}
+
+@media (max-width: 768px) {
+  .company-detail {
+    padding: 2rem 1.5rem;
+  }
+
+  .company-detail .header {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 1.5rem;
+  }
+
+  .company-detail .header-content h1 {
+    font-size: 2rem;
+  }
+
+  .company-detail .btn-primary {
+    width: 100%;
+    text-align: center;
+  }
+
+  .company-detail .stats-grid {
+    grid-template-columns: 1fr;
+  }
+}
