@@ -77,15 +77,21 @@ class EntityExtractor:
         r"\b(Hugging\s*Face|HuggingFace)\b",
     ]
 
-    def __init__(self, use_spacy: bool = True):
+    def __init__(self, use_spacy: bool = True, company_context: dict = None):
         """
         Initialize the extractor.
 
         Args:
             use_spacy: Whether to use spaCy NER (if available)
+            company_context: Dict with company info for relevance filtering:
+                - company_name: Name of the company being analyzed
+                - industry: Company's industry
+                - keywords: List of relevant keywords
+                - products: List of known products
         """
         self.resolver = EntityResolver()
         self.use_spacy = use_spacy and SPACY_AVAILABLE
+        self.company_context = company_context or {}
 
         # Compile regex patterns
         self._compiled_patterns = [
@@ -98,6 +104,7 @@ class EntityExtractor:
             "entities_found": 0,
             "spacy_extractions": 0,
             "regex_extractions": 0,
+            "filtered_out": 0,
         }
 
     def extract_from_posts(self, posts: List[Dict]) -> EntityResolver:
@@ -131,6 +138,8 @@ class EntityExtractor:
         if self.use_spacy:
             print(f"   From spaCy NER: {self.stats['spacy_extractions']}")
         print(f"   From regex: {self.stats['regex_extractions']}")
+        if self.stats['filtered_out'] > 0:
+            print(f"   Filtered as irrelevant: {self.stats['filtered_out']}")
         print(f"   Unique entities: {len(self.resolver.entities)}")
 
         return self.resolver
@@ -160,6 +169,11 @@ class EntityExtractor:
 
         # Resolve each mention
         for entity_text, context in mentions:
+            # Apply relevance filter before resolving
+            if not self._is_relevant_entity(entity_text):
+                self.stats["filtered_out"] += 1
+                continue
+
             canonical, confidence = self.resolver.resolve(
                 raw_text=entity_text, context=context, source_info=source_info
             )
@@ -239,6 +253,107 @@ class EntityExtractor:
                 mentions.append((entity_text, context))
 
         return mentions
+
+    def _is_relevant_entity(self, entity_text: str) -> bool:
+        """
+        Filter out irrelevant entities based on company context.
+
+        Returns True if entity should be kept, False if it should be filtered out.
+        """
+        entity_lower = entity_text.lower().strip()
+
+        # Always keep if no context provided (backward compatibility)
+        if not self.company_context:
+            return True
+
+        # Filter 1: Exclude generic geographic locations (GPE entities)
+        # These are rarely relevant for company intelligence
+        geographic_noise = {
+            "united states", "usa", "us", "uk", "united kingdom", "canada",
+            "california", "new york", "texas", "florida", "washington",
+            "san francisco", "los angeles", "seattle", "boston", "chicago",
+            "europe", "asia", "africa", "america", "china", "india", "japan"
+        }
+        if entity_lower in geographic_noise:
+            return False
+
+        # Filter 2: Exclude very short entities (likely noise)
+        if len(entity_text) <= 2:
+            return False
+
+        # Filter 3: Exclude common entertainment/pop culture that's not relevant
+        # (unless it's in the company's industry)
+        industry = self.company_context.get("industry", "").lower()
+        entertainment_noise = {
+            "pokemon", "pokémon", "stargate", "star wars", "marvel", "dc comics",
+            "disney", "netflix", "hbo", "game of thrones", "lord of the rings"
+        }
+
+        # Only filter entertainment if NOT in entertainment/gaming/media industry
+        if entity_lower in entertainment_noise:
+            if not any(term in industry for term in ["entertainment", "gaming", "media", "content"]):
+                return False
+
+        # Filter 4: Exclude common noise words that spaCy sometimes flags
+        noise_words = {
+            "ps", "pps", "edit", "update", "tldr", "tl;dr",
+            "ama", "eli5", "fyi", "btw", "imo", "imho",
+            "reddit", "subreddit", "upvote", "downvote",
+            "the catfather", "the power of the internet"
+        }
+        if entity_lower in noise_words:
+            return False
+
+        # Filter 5: Exclude random service platforms (unless analyzing them)
+        company_name = self.company_context.get("company_name", "").lower()
+        service_platforms = {
+            "fiverr", "fivver", "upwork", "freelancer",
+            "churu"  # Common cat treat brand that appears in random contexts
+        }
+        if entity_lower in service_platforms and entity_lower not in company_name:
+            return False
+
+        # Filter 6: Keep if entity is related to company context
+        # Check against company keywords, products, etc.
+        keywords = self.company_context.get("keywords", [])
+        products = self.company_context.get("products", [])
+
+        # Build relevance set (lowercase)
+        relevance_set = set()
+        relevance_set.add(company_name)
+        relevance_set.update(kw.lower() for kw in keywords)
+        relevance_set.update(p.lower() for p in products)
+
+        # Known tech/AI companies and products - always relevant for tech analysis
+        tech_entities = {
+            "openai", "anthropic", "google", "microsoft", "meta", "apple",
+            "amazon", "tesla", "nvidia", "intel", "amd",
+            "chatgpt", "gpt", "claude", "gemini", "copilot", "dall-e",
+            "github", "stackoverflow", "twitter", "x", "facebook", "instagram",
+            "sam altman", "elon musk", "satya nadella", "sundar pichai",
+            "mark zuckerberg", "jeff bezos", "tim cook", "jensen huang"
+        }
+
+        # Keep if it's a known tech entity (for tech companies)
+        if "ai" in industry or "tech" in industry or "software" in industry:
+            if any(te in entity_lower for te in tech_entities):
+                return True
+
+        # Keep if entity matches or contains company keywords
+        for keyword in relevance_set:
+            if keyword and (keyword in entity_lower or entity_lower in keyword):
+                return True
+
+        # Filter 7: For entities we haven't specifically whitelisted,
+        # be more conservative - only keep if they appear to be companies/products
+        # (i.e., proper capitalization, not common words)
+
+        # If it's all lowercase, probably not a company/product
+        if entity_text.islower():
+            return False
+
+        # Default: Keep the entity if it passed all filters
+        return True
 
     # =========================================================================
     # Convenience methods that delegate to resolver

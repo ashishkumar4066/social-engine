@@ -84,6 +84,19 @@ class SummaryResponse(BaseModel):
     entities_by_type: dict
 
 
+class RelationshipResponse(BaseModel):
+    id: int
+    source_entity: str
+    relationship_type: str
+    target_entity: str
+    confidence: float
+    evidence_count: int
+    evidence: List[str]
+    source_posts: List[str]
+    source_subreddits: List[str]
+    extraction_method: str
+
+
 class AnalyzeRequest(BaseModel):
     domain: str
     top_n: int = 20
@@ -308,6 +321,16 @@ async def root():
                 "method": "GET",
                 "path": "/companies/{company_id}/summary",
                 "description": "Get summary statistics"
+            },
+            {
+                "method": "GET",
+                "path": "/companies/{company_id}/relationships",
+                "description": "Get relationships for a company"
+            },
+            {
+                "method": "GET",
+                "path": "/companies/{company_id}/relationships/entity/{entity_name}",
+                "description": "Get relationships for a specific entity"
             }
         ],
         "documentation": "/docs",
@@ -502,6 +525,46 @@ async def get_company_summary(company_id: int):
     return summary
 
 
+@app.get("/companies/{company_id}/relationships", response_model=List[RelationshipResponse])
+async def get_company_relationships(
+    company_id: int,
+    min_confidence: float = Query(0.5, ge=0.0, le=1.0, description="Minimum confidence score")
+):
+    """
+    Get all relationships for a company with optional confidence filtering.
+
+    Args:
+        company_id: The company ID
+        min_confidence: Minimum confidence score (0.0 to 1.0)
+
+    Returns:
+        List of relationships involving entities related to the company
+    """
+    db = get_db()
+    relationships = db.get_relationships_by_company(company_id, min_confidence)
+
+    return relationships
+
+
+@app.get("/companies/{company_id}/relationships/entity/{entity_name}", response_model=List[RelationshipResponse])
+async def get_entity_relationships(
+    company_id: int,
+    entity_name: str
+):
+    """
+    Get all relationships involving a specific entity.
+
+    Args:
+        company_id: The company ID
+        entity_name: The name of the entity
+
+    Returns:
+        List of relationships where the entity is either source or target
+    """
+    db = get_db()
+    relationships = db.get_relationships_by_entity(company_id, entity_name)
+
+    return relationships
 
 
 # =============================================================================

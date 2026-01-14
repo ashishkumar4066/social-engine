@@ -20,7 +20,7 @@ const EntityBrowser = () => {
       try {
         setLoading(true);
         const id = parseInt(companyId);
-        const data = await api.getCompanyEntities(id, undefined, 100);
+        const data = await api.getCompanyEntities(id, undefined, 200);
         setEntities(data);
       } catch (err) {
         setError(err instanceof Error ? err.message : 'Failed to fetch entities');

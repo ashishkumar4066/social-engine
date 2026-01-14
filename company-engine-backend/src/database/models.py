@@ -227,6 +227,28 @@ class Database:
         """
         )
 
+        # Relationships table (entity relationships)
+        self.cursor.execute(
+            """
+            CREATE TABLE IF NOT EXISTS relationships (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                company_id INTEGER NOT NULL,
+                source_entity TEXT NOT NULL,
+                relationship_type TEXT NOT NULL,
+                target_entity TEXT NOT NULL,
+                confidence REAL DEFAULT 0.0,
+                evidence_count INTEGER DEFAULT 0,
+                evidence TEXT,  -- JSON array of evidence snippets
+                source_posts TEXT,  -- JSON array of post IDs
+                source_subreddits TEXT,  -- JSON array of subreddit names
+                extraction_method TEXT,
+                created_at TEXT DEFAULT CURRENT_TIMESTAMP,
+                FOREIGN KEY (company_id) REFERENCES companies(id),
+                UNIQUE(company_id, source_entity, relationship_type, target_entity)
+            )
+        """
+        )
+
         # Create indexes for faster queries
         self.cursor.execute(
             "CREATE INDEX IF NOT EXISTS idx_subreddits_company ON subreddits(company_id)"
@@ -240,9 +262,12 @@ class Database:
         self.cursor.execute(
             "CREATE INDEX IF NOT EXISTS idx_mentions_entity ON mentions(entity_id)"
         )
+        self.cursor.execute(
+            "CREATE INDEX IF NOT EXISTS idx_relationships_company ON relationships(company_id)"
+        )
 
         self.conn.commit()
-        print("✅ Database tables initialized")
+        print("Database tables initialized")
 
     # =========================================================================
     # Company Methods
@@ -572,6 +597,142 @@ class Database:
             (entity_id, limit),
         )
         return [dict(row) for row in self.cursor.fetchall()]
+
+    # =========================================================================
+    # Relationship Methods
+    # =========================================================================
+
+    def insert_relationship(self, company_id: int, data: dict) -> int:
+        """Insert a relationship"""
+        self.cursor.execute(
+            """
+            INSERT OR REPLACE INTO relationships
+            (company_id, source_entity, relationship_type, target_entity,
+             confidence, evidence_count, evidence, source_posts,
+             source_subreddits, extraction_method)
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+        """,
+            (
+                company_id,
+                data.get("source_entity", ""),
+                data.get("relationship_type", ""),
+                data.get("target_entity", ""),
+                data.get("confidence", 0.0),
+                data.get("evidence_count", 0),
+                json.dumps(data.get("evidence", [])),
+                json.dumps(data.get("source_posts", [])),
+                json.dumps(data.get("source_subreddits", [])),
+                data.get("extraction_method", ""),
+            ),
+        )
+        self.conn.commit()
+        return self.cursor.lastrowid
+
+    def insert_relationships_bulk(self, company_id: int, relationships: List) -> int:
+        """
+        Bulk insert relationships from RelationshipExtractor.
+
+        Args:
+            company_id: Company ID
+            relationships: List of EntityRelationship objects
+
+        Returns:
+            Number of relationships inserted
+        """
+        count = 0
+        for rel in relationships:
+            data = {
+                "source_entity": rel.source_entity,
+                "relationship_type": rel.relationship_type,
+                "target_entity": rel.target_entity,
+                "confidence": rel.confidence,
+                "evidence_count": len(rel.evidence),
+                "evidence": rel.evidence,
+                "source_posts": rel.source_posts,
+                "source_subreddits": rel.source_subreddits,
+                "extraction_method": rel.extraction_method,
+            }
+            self.insert_relationship(company_id, data)
+            count += 1
+
+        return count
+
+    def get_relationships_by_company(self, company_id: int, min_confidence: float = 0.5) -> List[dict]:
+        """Get all relationships for a company"""
+        self.cursor.execute(
+            """
+            SELECT * FROM relationships
+            WHERE company_id = ? AND confidence >= ?
+            ORDER BY confidence DESC
+        """,
+            (company_id, min_confidence),
+        )
+        rows = self.cursor.fetchall()
+
+        # Parse JSON fields
+        relationships = []
+        for row in rows:
+            rel_dict = dict(row)
+            rel_dict["evidence"] = json.loads(rel_dict.get("evidence", "[]"))
+            rel_dict["source_posts"] = json.loads(rel_dict.get("source_posts", "[]"))
+            rel_dict["source_subreddits"] = json.loads(
+                rel_dict.get("source_subreddits", "[]")
+            )
+            relationships.append(rel_dict)
+
+        return relationships
+
+    def get_relationships_by_entity(self, company_id: int, entity_name: str) -> List[dict]:
+        """Get all relationships involving a specific entity (as source or target)"""
+        self.cursor.execute(
+            """
+            SELECT * FROM relationships
+            WHERE company_id = ? AND (source_entity = ? OR target_entity = ?)
+            ORDER BY confidence DESC
+        """,
+            (company_id, entity_name, entity_name),
+        )
+        rows = self.cursor.fetchall()
+
+        # Parse JSON fields
+        relationships = []
+        for row in rows:
+            rel_dict = dict(row)
+            rel_dict["evidence"] = json.loads(rel_dict.get("evidence", "[]"))
+            rel_dict["source_posts"] = json.loads(rel_dict.get("source_posts", "[]"))
+            rel_dict["source_subreddits"] = json.loads(
+                rel_dict.get("source_subreddits", "[]")
+            )
+            relationships.append(rel_dict)
+
+        return relationships
+
+    def get_relationships_by_type(
+        self, company_id: int, relationship_type: str
+    ) -> List[dict]:
+        """Get all relationships of a specific type"""
+        self.cursor.execute(
+            """
+            SELECT * FROM relationships
+            WHERE company_id = ? AND relationship_type = ?
+            ORDER BY confidence DESC
+        """,
+            (company_id, relationship_type),
+        )
+        rows = self.cursor.fetchall()
+
+        # Parse JSON fields
+        relationships = []
+        for row in rows:
+            rel_dict = dict(row)
+            rel_dict["evidence"] = json.loads(rel_dict.get("evidence", "[]"))
+            rel_dict["source_posts"] = json.loads(rel_dict.get("source_posts", "[]"))
+            rel_dict["source_subreddits"] = json.loads(
+                rel_dict.get("source_subreddits", "[]")
+            )
+            relationships.append(rel_dict)
+
+        return relationships
 
     # =========================================================================
     # Summary Methods

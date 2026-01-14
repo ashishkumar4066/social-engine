@@ -59,3 +59,16 @@ export interface AnalyzeResponse {
   message: string;
   already_existed: boolean;
 }
+
+export interface Relationship {
+  id: number;
+  source_entity: string;
+  relationship_type: string;
+  target_entity: string;
+  confidence: number;
+  evidence_count: number;
+  evidence: string[];
+  source_posts: string[];
+  source_subreddits: string[];
+  extraction_method: string;
+}

@@ -6,6 +6,7 @@ import type {
   Summary,
   AnalyzeRequest,
   AnalyzeResponse,
+  Relationship,
 } from './types';
 
 const API_BASE_URL = 'http://localhost:8000';
@@ -85,6 +86,24 @@ class ApiService {
       },
       body: JSON.stringify(request),
     });
+  }
+
+  async getCompanyRelationships(
+    companyId: number,
+    minConfidence: number = 0.5
+  ): Promise<Relationship[]> {
+    return this.fetchJson<Relationship[]>(
+      `/companies/${companyId}/relationships?min_confidence=${minConfidence}`
+    );
+  }
+
+  async getEntityRelationships(
+    companyId: number,
+    entityName: string
+  ): Promise<Relationship[]> {
+    return this.fetchJson<Relationship[]>(
+      `/companies/${companyId}/relationships/entity/${encodeURIComponent(entityName)}`
+    );
   }
 }
 

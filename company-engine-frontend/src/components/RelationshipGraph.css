@@ -1,0 +1,104 @@
+.relationship-graph {
+  background: white;
+  border-radius: 12px;
+  padding: 24px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+  margin: 20px 0;
+}
+
+.graph-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 20px;
+}
+
+.graph-header h3 {
+  margin: 0;
+  font-size: 1.5rem;
+  color: #1a202c;
+}
+
+.graph-legend {
+  display: flex;
+  gap: 20px;
+}
+
+.legend-item {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 0.875rem;
+  color: #4a5568;
+}
+
+.legend-dot {
+  width: 12px;
+  height: 12px;
+  border-radius: 50%;
+  border: 2px solid #fff;
+}
+
+.graph-canvas {
+  border: 1px solid #e2e8f0;
+  border-radius: 8px;
+  background: #fafafa;
+  display: block;
+  margin: 0 auto;
+}
+
+.relationship-graph-empty {
+  background: white;
+  border-radius: 12px;
+  padding: 60px 24px;
+  text-align: center;
+  color: #718096;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+}
+
+.node-details {
+  margin-top: 20px;
+  padding: 16px;
+  background: #f7fafc;
+  border-radius: 8px;
+  border: 1px solid #e2e8f0;
+}
+
+.node-details h4 {
+  margin: 0 0 12px 0;
+  color: #2d3748;
+  font-size: 1.125rem;
+}
+
+.node-relationships {
+  margin-top: 8px;
+}
+
+.node-relationships p {
+  margin: 0 0 8px 0;
+  color: #4a5568;
+  font-size: 0.875rem;
+}
+
+.node-relationships ul {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+}
+
+.node-relationships li {
+  padding: 6px 0;
+  color: #2d3748;
+  font-size: 0.9rem;
+  border-bottom: 1px solid #e2e8f0;
+}
+
+.node-relationships li:last-child {
+  border-bottom: none;
+}
+
+.node-relationships .confidence {
+  color: #718096;
+  font-size: 0.875rem;
+  margin-left: 4px;
+}

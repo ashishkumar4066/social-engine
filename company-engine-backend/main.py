@@ -200,18 +200,47 @@ def main(domain: str, top_n: int = 20, fetch_posts_from: int = 5, db_path: str =
     print("🏷️  STEP 4: EXTRACT AND RESOLVE ENTITIES")
     print("=" * 70)
 
-    entity_extractor = EntityExtractor()
+    # Pass company context for relevance filtering
+    company_context = {
+        "company_name": company_info.company_name,
+        "industry": company_info.industry,
+        "keywords": company_info.keywords,
+        "products": company_info.products,
+    }
+
+    entity_extractor = EntityExtractor(company_context=company_context)
     resolver = entity_extractor.extract_from_posts(all_posts)
 
     # Save entities to database
     db.insert_entities_from_resolver(company_id, resolver)
 
     # =========================================================================
-    # STEP 5: Display Results
+    # STEP 5: Extract Relationships
     # =========================================================================
 
     print(f"\n{'='*70}")
-    print("📊 STEP 5: RESULTS")
+    print("🔗 STEP 5: EXTRACT RELATIONSHIPS")
+    print("=" * 70)
+
+    from src.relationship import RelationshipExtractor
+
+    relationship_extractor = RelationshipExtractor()
+    relationships = relationship_extractor.extract_relationships(
+        entities=resolver.get_all_entities(),
+        posts=all_posts
+    )
+
+    # Save relationships to database
+    if relationships:
+        count = db.insert_relationships_bulk(company_id, relationships)
+        print(f"\n   💾 Saved {count} relationships to database")
+
+    # =========================================================================
+    # STEP 6: Display Results
+    # =========================================================================
+
+    print(f"\n{'='*70}")
+    print("📊 STEP 6: RESULTS")
     print("=" * 70)
 
     # Organizations
@@ -237,6 +266,13 @@ def main(domain: str, top_n: int = 20, fetch_posts_from: int = 5, db_path: str =
         print(f"   • {entity.canonical_name} ({entity.mention_count} mentions)")
         if entity.aliases:
             print(f"     Aliases: {', '.join(entity.aliases[:3])}")
+
+    # Relationships
+    print(f"\n🔗 RELATIONSHIPS ({len(relationships)} found):")
+    if relationships:
+        for rel in relationships[:15]:  # Show top 15
+            print(f"   • {rel.source_entity} → {rel.relationship_type} → {rel.target_entity}")
+            print(f"     Confidence: {rel.confidence:.0%}, Evidence: {rel.evidence_count} mentions")
 
     # =========================================================================
     # Show detailed mentions for top entity
