@@ -1,8 +1,7 @@
 import { useEffect, useState } from 'react';
 import { useParams, Link } from 'react-router-dom';
 import api from '../api';
-import type { Company, Subreddit, Summary, Relationship } from '../types';
-import RelationshipGraph from '../components/RelationshipGraph';
+import type { Company, Subreddit, Summary } from '../types';
 import './CompanyDetail.css';
 
 const CompanyDetail = () => {
@@ -10,7 +9,6 @@ const CompanyDetail = () => {
   const [company, setCompany] = useState<Company | null>(null);
   const [subreddits, setSubreddits] = useState<Subreddit[]>([]);
   const [summary, setSummary] = useState<Summary | null>(null);
-  const [relationships, setRelationships] = useState<Relationship[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
@@ -21,16 +19,14 @@ const CompanyDetail = () => {
       try {
         setLoading(true);
         const id = parseInt(companyId);
-        const [companyData, subredditsData, summaryData, relationshipsData] = await Promise.all([
+        const [companyData, subredditsData, summaryData] = await Promise.all([
           api.getCompany(id),
           api.getCompanySubreddits(id, 20),
           api.getCompanySummary(id),
-          api.getCompanyRelationships(id, 0.6), // Min confidence 60%
         ]);
         setCompany(companyData);
         setSubreddits(subredditsData);
         setSummary(summaryData);
-        setRelationships(relationshipsData);
       } catch (err) {
         setError(err instanceof Error ? err.message : 'Failed to fetch company details');
       } finally {
@@ -80,18 +76,9 @@ const CompanyDetail = () => {
               <div className="stat-value">{summary.mention_count}</div>
               <div className="stat-label">Mentions</div>
             </div>
-            <div className="stat-card">
-              <div className="stat-value">{relationships.length}</div>
-              <div className="stat-label">Relationships</div>
-            </div>
           </div>
         </div>
       )}
-
-      <RelationshipGraph
-        relationships={relationships}
-        centerEntity={company?.company_name}
-      />
 
       <div className="subreddits-section">
         <h2>Top Subreddits ({subreddits.length})</h2>

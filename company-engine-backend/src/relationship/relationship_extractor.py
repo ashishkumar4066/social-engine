@@ -73,10 +73,13 @@ class RelationshipExtractor:
         self.patterns = {
             # CEO relationships
             RelationshipType.CEO: [
-                r"{PERSON} (?:is|was|became|serves as) (?:the )?CEO (?:of|at) {ORG}",
+                r"{PERSON} (?:is|was|became|serves as) (?:the )?CEO (?:of|at|for) {ORG}",
                 r"{ORG}'?s? CEO {PERSON}",
-                r"CEO {PERSON}(?: of| at)? {ORG}",
-                r"{PERSON},? (?:who )?(?:leads|runs) {ORG}",
+                r"CEO {PERSON}(?: of| at| for)? {ORG}",
+                r"{PERSON},? (?:who )?(?:leads|runs|running|headed|heading) {ORG}",
+                r"{PERSON} (?:at|of|from) {ORG}",  # Weaker signal but common in Reddit
+                r"{ORG} CEO,? {PERSON}",
+                r"{PERSON},? {ORG}'?s? CEO",
             ],
 
             # Founder relationships
@@ -124,10 +127,14 @@ class RelationshipExtractor:
 
             # Product relationships
             RelationshipType.PRODUCT_OF: [
-                r"{ORG} (?:created|built|developed|released|launched|announced) {PRODUCT}",
-                r"{PRODUCT} (?:by|from) {ORG}",
+                r"{ORG} (?:created|built|developed|released|launched|announced|makes|made|offers|introduced|owns) {PRODUCT}",
+                r"{PRODUCT} (?:by|from|of) {ORG}",
                 r"{ORG}'?s? {PRODUCT}",
-                r"{PRODUCT},? (?:a product|made) by {ORG}",
+                r"{PRODUCT},? (?:a product|made|tool|service|model|platform) (?:by|from|of) {ORG}",
+                r"{PRODUCT} (?:is|was) (?:a|an|the)? (?:product|tool|service|model|platform) (?:by|from|of) {ORG}",
+                r"{ORG} (?:has|have) {PRODUCT}",
+                r"(?:using|with) {PRODUCT} (?:by|from) {ORG}",
+                r"{ORG} (?:announced|revealed|showed off) {PRODUCT}",
             ],
 
             # Partnership

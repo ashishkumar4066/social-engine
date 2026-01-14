@@ -2,10 +2,14 @@ import { useEffect, useState } from 'react';
 import { useParams } from 'react-router-dom';
 import api from '../api';
 import type { Entity, Mention } from '../types';
+import RelationshipBrowser from '../components/RelationshipBrowser';
 import './EntityBrowser.css';
+
+type Tab = 'entities' | 'relationships';
 
 const EntityBrowser = () => {
   const { companyId } = useParams<{ companyId: string }>();
+  const [activeTab, setActiveTab] = useState<Tab>('entities');
   const [entities, setEntities] = useState<Entity[]>([]);
   const [selectedEntity, setSelectedEntity] = useState<Entity | null>(null);
   const [mentions, setMentions] = useState<Mention[]>([]);
@@ -55,21 +59,38 @@ const EntityBrowser = () => {
     <div className="entity-browser">
       <h1>Entity Browser</h1>
 
-      <div className="filter-section">
-        <label>Filter by type:</label>
-        <select value={filter} onChange={(e) => setFilter(e.target.value)}>
-          <option value="">All Types</option>
-          {entityTypes.map((type) => (
-            <option key={type} value={type}>
-              {type}
-            </option>
-          ))}
-        </select>
+      <div className="tabs">
+        <button
+          className={`tab ${activeTab === 'entities' ? 'active' : ''}`}
+          onClick={() => setActiveTab('entities')}
+        >
+          Entity Browser
+        </button>
+        <button
+          className={`tab ${activeTab === 'relationships' ? 'active' : ''}`}
+          onClick={() => setActiveTab('relationships')}
+        >
+          Relationship Browser
+        </button>
       </div>
 
-      <div className="browser-layout">
-        <div className="entity-list">
-          <h2>Entities ({filteredEntities.length})</h2>
+      {activeTab === 'entities' ? (
+        <>
+          <div className="filter-section">
+            <label>Filter by type:</label>
+            <select value={filter} onChange={(e) => setFilter(e.target.value)}>
+              <option value="">All Types</option>
+              {entityTypes.map((type) => (
+                <option key={type} value={type}>
+                  {type}
+                </option>
+              ))}
+            </select>
+          </div>
+
+          <div className="browser-layout">
+            <div className="entity-list">
+              <h2>Entities ({filteredEntities.length})</h2>
           {filteredEntities.map((entity) => (
             <div
               key={entity.id}
@@ -116,6 +137,10 @@ const EntityBrowser = () => {
           )}
         </div>
       </div>
+        </>
+      ) : (
+        <RelationshipBrowser companyId={parseInt(companyId!)} />
+      )}
     </div>
   );
 };

@@ -7,6 +7,7 @@ import type {
   AnalyzeRequest,
   AnalyzeResponse,
   Relationship,
+  GroupedRelationship,
 } from './types';
 
 const API_BASE_URL = 'http://localhost:8000';
@@ -103,6 +104,15 @@ class ApiService {
   ): Promise<Relationship[]> {
     return this.fetchJson<Relationship[]>(
       `/companies/${companyId}/relationships/entity/${encodeURIComponent(entityName)}`
+    );
+  }
+
+  async getGroupedRelationships(
+    companyId: number,
+    minConfidence: number = 0.5
+  ): Promise<GroupedRelationship[]> {
+    return this.fetchJson<GroupedRelationship[]>(
+      `/companies/${companyId}/relationships/grouped?min_confidence=${minConfidence}`
     );
   }
 }

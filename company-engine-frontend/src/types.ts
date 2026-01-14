@@ -72,3 +72,11 @@ export interface Relationship {
   source_subreddits: string[];
   extraction_method: string;
 }
+
+export interface GroupedRelationship {
+  pKey: string[];  // Source entities
+  relationship: string;  // Relationship type
+  fKey: string;  // Target entity
+  confidence: number;
+  evidence_count: number;
+}

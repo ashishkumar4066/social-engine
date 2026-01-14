@@ -6,6 +6,37 @@
   margin-bottom: 1.5rem;
 }
 
+.entity-browser .tabs {
+  display: flex;
+  gap: 0.5rem;
+  margin-bottom: 2rem;
+  border-bottom: 2px solid #333;
+  padding-bottom: 0;
+}
+
+.entity-browser .tabs .tab {
+  padding: 0.75rem 1.5rem;
+  background: transparent;
+  border: none;
+  color: #aaa;
+  font-size: 1rem;
+  font-weight: 500;
+  cursor: pointer;
+  border-bottom: 3px solid transparent;
+  transition: all 0.2s;
+  margin-bottom: -2px;
+}
+
+.entity-browser .tabs .tab:hover {
+  color: #fff;
+  background: #252525;
+}
+
+.entity-browser .tabs .tab.active {
+  color: #ef4444;
+  border-bottom-color: #ef4444;
+}
+
 .entity-browser .filter-section {
   margin-bottom: 1.5rem;
   display: flex;

@@ -29,6 +29,7 @@ from src.company_extractor import CompanyExtractor
 from src.reddit.subreddit_discovery import SubredditDiscovery
 from src.reddit.reddit_client import RedditClient
 from src.entity.entity_extractor import EntityExtractor
+from src.relationship.relationship_extractor import RelationshipExtractor
 
 # =============================================================================
 # Pydantic Models (for API responses)
@@ -95,6 +96,14 @@ class RelationshipResponse(BaseModel):
     source_posts: List[str]
     source_subreddits: List[str]
     extraction_method: str
+
+
+class GroupedRelationshipResponse(BaseModel):
+    pKey: List[str]  # Source entities (e.g., ["chatgpt", "dalle"])
+    relationship: str  # Relationship type (e.g., "product of")
+    fKey: str  # Target entity (e.g., "openai")
+    confidence: float
+    evidence_count: int
 
 
 class AnalyzeRequest(BaseModel):
@@ -258,6 +267,26 @@ async def run_pipeline(domain: str, top_n: int = 20, fetch_posts_from: int = 5) 
 
     # Save entities to database
     db.insert_entities_from_resolver(company_id, resolver)
+
+    # =========================================================================
+    # STEP 5: Extract Relationships Between Entities
+    # =========================================================================
+
+    # Get entities that were just saved
+    entities = resolver.get_all_entities()
+
+    if entities and all_posts:
+        print(f"\nExtracting relationships from {len(all_posts)} posts...")
+        relationship_extractor = RelationshipExtractor()
+        relationships = relationship_extractor.extract_relationships(
+            entities=entities,
+            posts=all_posts
+        )
+
+        # Save relationships to database
+        if relationships:
+            db.insert_relationships_bulk(company_id, relationships)
+            print(f"Saved {len(relationships)} relationships to database")
 
     # =========================================================================
     # Get Summary
@@ -565,6 +594,77 @@ async def get_entity_relationships(
     relationships = db.get_relationships_by_entity(company_id, entity_name)
 
     return relationships
+
+
+@app.get("/companies/{company_id}/relationships/grouped", response_model=List[GroupedRelationshipResponse])
+async def get_grouped_relationships(
+    company_id: int,
+    min_confidence: float = Query(0.5, ge=0.0, le=1.0, description="Minimum confidence score")
+):
+    """
+    Get relationships grouped by relationship type and target entity.
+
+    This endpoint groups all source entities that have the same relationship
+    to the same target entity together.
+
+    Example:
+        [
+            {
+                "pKey": ["chatgpt", "dalle"],
+                "relationship": "product of",
+                "fKey": "openai",
+                "confidence": 0.90,
+                "evidence_count": 5
+            }
+        ]
+
+    Args:
+        company_id: The company ID
+        min_confidence: Minimum confidence score (0.0 to 1.0)
+
+    Returns:
+        List of grouped relationships
+    """
+    db = get_db()
+
+    # Get all relationships for the company
+    all_relationships = db.get_relationships_by_company(company_id, min_confidence)
+
+    # Group by (relationship_type, target_entity)
+    from collections import defaultdict
+    grouped = defaultdict(lambda: {
+        "sources": [],
+        "confidence_sum": 0.0,
+        "confidence_count": 0,
+        "evidence_count": 0
+    })
+
+    for rel in all_relationships:
+        key = (rel["relationship_type"], rel["target_entity"].lower())
+        group = grouped[key]
+
+        group["sources"].append(rel["source_entity"])
+        group["confidence_sum"] += rel["confidence"]
+        group["confidence_count"] += 1
+        group["evidence_count"] += rel["evidence_count"]
+
+    # Convert to response format
+    result = []
+    for (rel_type, target), data in grouped.items():
+        avg_confidence = data["confidence_sum"] / data["confidence_count"] if data["confidence_count"] > 0 else 0.0
+
+        result.append({
+            "pKey": data["sources"],
+            "relationship": rel_type,
+            "fKey": target,
+            "confidence": round(avg_confidence, 2),
+            "evidence_count": data["evidence_count"]
+        })
+
+    # Sort by evidence count (most evidence first)
+    result.sort(key=lambda x: x["evidence_count"], reverse=True)
+
+    return result
 
 
 # =============================================================================
