@@ -192,9 +192,14 @@ class WikipediaExtractor:
             if len(extract) < 100:
                 return self._empty_result(company_name, "Content too short")
             
+            # Extract first 5 lines for description, but truncate at last full stop
+            lines = extract.split('\n')
+            description = '\n'.join(lines[:5]).strip()
+            description = self._truncate_at_last_sentence(description)
+
             return WikipediaResult(
                 company_name=company_name,
-                description=extract[:500],
+                description=description,
                 full_text=extract,
                 categories=content['categories'],
                 page_title=page_title,
@@ -294,6 +299,29 @@ class WikipediaExtractor:
             'categories': categories
         }
     
+    def _truncate_at_last_sentence(self, text: str) -> str:
+        """
+        Truncate text at the last complete sentence (ending with a period).
+
+        Args:
+            text: The text to truncate
+
+        Returns:
+            Text truncated at the last full stop, or original text if no full stop found
+        """
+        if not text:
+            return text
+
+        # Find the last period that ends a sentence (not part of abbreviations like Inc. or Co.)
+        last_period_idx = text.rfind('.')
+
+        if last_period_idx == -1:
+            # No period found, return original text
+            return text
+
+        # Return text up to and including the last period
+        return text[:last_period_idx + 1].strip()
+
     def _empty_result(self, company_name: str, error_message: str) -> WikipediaResult:
         """Create an empty result with error message."""
         return WikipediaResult(

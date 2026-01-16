@@ -30,11 +30,24 @@ const RelationshipBrowser = ({ companyId }: RelationshipBrowserProps) => {
   }, [companyId]);
 
   if (loading) {
-    return <div className="relationship-browser loading">Loading relationships...</div>;
+    return (
+      <div className="relationship-browser">
+        <div className="relationship-browser-loading">
+          <div className="spinner"></div>
+          <p className="relationship-browser-loading-text">Loading relationships...</p>
+        </div>
+      </div>
+    );
   }
 
   if (error) {
-    return <div className="relationship-browser error">Error: {error}</div>;
+    return (
+      <div className="relationship-browser">
+        <div className="relationship-browser-error">
+          <p className="relationship-browser-error-text">Error: {error}</p>
+        </div>
+      </div>
+    );
   }
 
   // Get unique relationship types
@@ -47,7 +60,7 @@ const RelationshipBrowser = ({ companyId }: RelationshipBrowserProps) => {
 
   return (
     <div className="relationship-browser">
-      <div className="filter-section">
+      <div className="relationship-filter">
         <label>Filter by relationship type:</label>
         <select value={filterType} onChange={(e) => setFilterType(e.target.value)}>
           <option value="">All Types ({relationships.length})</option>
@@ -61,22 +74,27 @@ const RelationshipBrowser = ({ companyId }: RelationshipBrowserProps) => {
 
       <div className="relationship-list">
         {filteredRelationships.length === 0 ? (
-          <div className="empty-state">
-            No relationships found. Relationships are extracted from posts during analysis.
+          <div className="relationship-empty">
+            <div className="relationship-empty-icon">&#128279;</div>
+            <p className="relationship-empty-text">
+              No relationships found. Relationships are extracted from posts during analysis.
+            </p>
           </div>
         ) : (
           filteredRelationships.map((rel, index) => (
             <div key={index} className="relationship-card">
               <div className="relationship-header">
                 <span className="relationship-type">{rel.relationship}</span>
-                <span className="confidence">Confidence: {(rel.confidence * 100).toFixed(0)}%</span>
+                <span className="relationship-confidence">
+                  {(rel.confidence * 100).toFixed(0)}% confidence
+                </span>
               </div>
 
               <div className="relationship-content">
                 <div className="entities-section">
                   <div className="entity-group">
                     <div className="entity-label">Source Entities ({rel.pKey.length})</div>
-                    <div className="entity-list">
+                    <div className="entity-tags">
                       {rel.pKey.map((entity, i) => (
                         <span key={i} className="entity-tag source">
                           {entity}
@@ -85,11 +103,11 @@ const RelationshipBrowser = ({ companyId }: RelationshipBrowserProps) => {
                     </div>
                   </div>
 
-                  <div className="arrow">→</div>
+                  <div className="relationship-arrow">&#8594;</div>
 
                   <div className="entity-group">
                     <div className="entity-label">Target Entity</div>
-                    <div className="entity-list">
+                    <div className="entity-tags">
                       <span className="entity-tag target">{rel.fKey}</span>
                     </div>
                   </div>
@@ -97,6 +115,7 @@ const RelationshipBrowser = ({ companyId }: RelationshipBrowserProps) => {
 
                 <div className="relationship-meta">
                   <span className="evidence-count">
+                    <span className="evidence-count-icon">&#128196;</span>
                     {rel.evidence_count} piece{rel.evidence_count !== 1 ? 's' : ''} of evidence
                   </span>
                 </div>

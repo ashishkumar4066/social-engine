@@ -25,26 +25,85 @@ const Companies = () => {
     fetchCompanies();
   }, []);
 
-  if (loading) return <div className="companies loading">Loading companies...</div>;
-  if (error) return <div className="companies error">Error: {error}</div>;
+  const getCompanyInitial = (name: string) => name.charAt(0).toUpperCase();
+
+  if (loading) {
+    return (
+      <div className="companies">
+        <div className="companies-loading">
+          <div className="spinner"></div>
+          <p className="companies-loading-text">Loading companies...</p>
+        </div>
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="companies">
+        <div className="companies-error">
+          <p className="companies-error-text">Error: {error}</p>
+        </div>
+      </div>
+    );
+  }
+
+  if (companies.length === 0) {
+    return (
+      <div className="companies">
+        <div className="companies-empty">
+          <div className="companies-empty-icon">&#128194;</div>
+          <h3 className="companies-empty-title">No companies yet</h3>
+          <p className="companies-empty-text">
+            Start by analyzing a company domain to build your intelligence database.
+          </p>
+          <Link to="/" className="companies-empty-link">
+            <span>&#128269;</span>
+            Analyze a Company
+          </Link>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="companies">
-      <h1>Companies</h1>
-      <div className="company-grid">
+      <header className="companies-header">
+        <h1 className="companies-title">Companies</h1>
+        <span className="companies-count">{companies.length} analyzed</span>
+      </header>
+
+      <div className="companies-grid">
         {companies.map((company) => (
-          <Link key={company.id} to={`/companies/${company.id}`} className="company-card">
-            <h3>{company.company_name}</h3>
-            <p className="domain">{company.domain}</p>
-            <p className="industry">{company.industry}</p>
-            <p className="description">{company.description}</p>
-            {company.technologies.length > 0 && (
-              <div className="tags">
-                {company.technologies.slice(0, 3).map((tech, i) => (
-                  <span key={i} className="tag">{tech}</span>
-                ))}
+          <Link
+            key={company.id}
+            to={`/companies/${company.id}`}
+            className="company-card-link"
+          >
+            <article className="company-card-item">
+              <div className="company-card-top">
+                <div className="company-card-logo">
+                  {getCompanyInitial(company.company_name)}
+                </div>
+                <div className="company-card-details">
+                  <h3 className="company-card-title">{company.company_name}</h3>
+                  <p className="company-card-domain-text">{company.domain}</p>
+                </div>
               </div>
-            )}
+
+              <span className="company-card-badge">{company.industry}</span>
+              <p className="company-card-desc">{company.description}</p>
+
+              {company.technologies.length > 0 && (
+                <div className="company-card-tech">
+                  {company.technologies.slice(0, 3).map((tech, i) => (
+                    <span key={i} className="company-card-tech-tag">{tech}</span>
+                  ))}
+                </div>
+              )}
+
+              <div className="company-card-arrow">&#8594;</div>
+            </article>
           </Link>
         ))}
       </div>
